@@ -1,17 +1,18 @@
 #include <iostream>
+#include <sys/types.h>
+#include <sys/ptrace.h>
+#include <sys/wait.h>
 
 namespace ContainerLib {
-  using time_t = size_t;
+    using time_t = size_t;
 
-  pid_t main_proc, slave_proc;
+    struct launch_options {
+        time_t time;
+        size_t forks_amount;
+        size_t forks_threshold;
+    };
 
-  struct launch_options {
-    time_t time;
-    size_t forks_amount;
-    size_t forks_threshold;
-  };
+    bool synchronize(pid_t pid);
 
-  pid_t create_processes();
-  bool flow_conrol();
-  void start(std::string path_to_binary, launch_options);
+    pid_t start(std::string path_to_binary, launch_options options);
 }
