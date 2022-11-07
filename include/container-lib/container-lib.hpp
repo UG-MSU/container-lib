@@ -1,3 +1,5 @@
+#ifndef CONTAINER_LIB_HPP__
+#define CONTAINER_LIB_HPP__
 #include <iostream>
 
 namespace ContainerLib {
@@ -12,6 +14,7 @@ namespace ContainerLib {
   };
 
   pid_t create_processes();
-  bool flow_conrol();
+  bool flow_control();
   void start(std::string path_to_binary, launch_options);
 }
+#endif
