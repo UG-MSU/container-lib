@@ -1,11 +1,7 @@
 #include <iostream>
-#include "../include/container_lib/cont_lib.h"
+#include "../include/container-lib/container-lib.hpp"
 
-bool synchronize(pid_t pid) {
-    return waitpid(pid, nullptr, 0);
-}
-
-void main_process(pid_t pid, ContainerLib::launch_options) {
+void ContainerLib::Container::main_process(launch_options) const {
     int status;
     do {
         ptrace(PTRACE_SYSCALL, pid, nullptr, nullptr);
@@ -15,22 +11,25 @@ void main_process(pid_t pid, ContainerLib::launch_options) {
     while (WIFEXITED(status));
 }
 
-pid_t start(std::string path_to_binary, ContainerLib::launch_options options) {
-    pid_t pid = fork();
+
+void ContainerLib::Container::start(std::string path_to_binary, launch_options options) {
+    pid = fork();
     if (pid) {
         pid_t pid1 = fork();
         if (pid1) {
-            return pid1;
+            return;
         }
         else {
-            main_process(pid, options);
+            main_process(options);
         }
     }
+    else {
+        ptrace(PTRACE_TRACEME, 0, 0, 0);
+        execl(path_to_binary.data(), nullptr);
+        perror("execl");
+    }
 }
-else {
-ptrace(PTRACE_TRACEME, 0, 0, 0);
-execl(path_to_binary.data(), nullptr);
-perror("execl");
-}
-return pid;
+
+bool ContainerLib::Container::synchronize() const {
+    return waitpid(pid, nullptr, 0);
 }
