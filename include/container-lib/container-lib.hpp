@@ -15,7 +15,7 @@ namespace ContainerLib {
     size_t forks_threshold;
   } launch_options;
 
-  pid_t create_processes();
+  void create_processes();
   bool sync();
   void start(std::string path_to_binary);
 }
