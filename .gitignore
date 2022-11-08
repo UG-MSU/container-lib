@@ -33,4 +33,9 @@
 *.out
 *.app
 
-build/
+# debug purpose only files
+
+build/**
+src/build.sh
+
+
