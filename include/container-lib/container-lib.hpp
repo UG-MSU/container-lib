@@ -1,18 +1,19 @@
 #include <iostream>
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
 #include <sys/ptrace.h>
+#include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
+
 
 namespace ContainerLib {
-  class Container {
+class Container {
   public:
     using time_t = size_t;
     struct launch_options {
-      time_t time;
-      size_t forks_amount;
-      size_t forks_threshold;
+        time_t time;
+        size_t forks_amount;
+        size_t forks_threshold;
     };
 
   private:
@@ -21,7 +22,7 @@ namespace ContainerLib {
 
   public:
     void start(std::string path_to_binary, launch_options options);
-    void ContainerLib::Container::create_processes();
+    void create_processes();
     bool sync() const;
-  };
-}
+};
+} // namespace ContainerLib
