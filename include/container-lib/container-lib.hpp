@@ -14,7 +14,7 @@ namespace ContainerLib {
         };
 
     private:
-        pid_t pid;
+        pid_t main_proc, slave_proc;
         void main_process(launch_options options) const;
 
     public:
