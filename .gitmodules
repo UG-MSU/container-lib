@@ -2,3 +2,4 @@
 	path = extern/pybind11
 	url = ../../pybind/pybind11
 	branch = stable
+
