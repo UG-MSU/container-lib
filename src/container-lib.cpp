@@ -1,9 +1,10 @@
 #include "../include/container-lib/container-lib.hpp"
 
-pid_t ContainerLib::create_processes() {
-  main_proc = getpid();
-  slave_proc = fork();
-  return slave_proc;
+void ContainerLib::create_processes() {
+  main_proc = frok();
+  if (get_pid() != main_proc)
+    slave_proc = fork();
+  return;
 }
 
 bool ContainerLib::sync() {
