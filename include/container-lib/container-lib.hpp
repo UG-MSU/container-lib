@@ -18,7 +18,7 @@ namespace ContainerLib {
         void main_process(launch_options options) const;
 
     public:
-        void start(std::string path_to_binary, launch_options options);
-        bool synchronize() const;
+        void start(std::string path_to_binary, launch_options options, std::string args);
+        bool sync() const;
     };
 }
