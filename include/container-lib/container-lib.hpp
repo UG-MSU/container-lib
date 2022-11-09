@@ -1,10 +1,11 @@
 #include <iostream>
-#include <sys/types.h>
 #include <sys/ptrace.h>
+#include <sys/types.h>
+#include <sys/user.h>
 #include <sys/wait.h>
 
 namespace ContainerLib {
-    class Container {
+class Container {
   public:
     using time_t = size_t;
     struct launch_options {
