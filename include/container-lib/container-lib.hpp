@@ -4,8 +4,8 @@
 #include <sys/wait.h>
 
 namespace ContainerLib {
-    class Container {
-  public:
+class Container {
+public:
     using time_t = size_t;
     struct launch_options {
         time_t time;
@@ -13,15 +13,13 @@ namespace ContainerLib {
         size_t forks_threshold;
     };
 
-  private:
+private:
     pid_t main_proc, slave_proc;
     void ptrace_process(launch_options options) const;
-    void create_processes(std::string path_to_binary, std::string args,
-                          launch_options options);
+    void create_processes(std::string path_to_binary, std::string args, launch_options options);
 
-  public:
-    void start(std::string path_to_binary, launch_options options,
-               std::string args);
+public:
+    void start(std::string path_to_binary, launch_options options, std::string args);
     bool sync() const;
 };
 }
