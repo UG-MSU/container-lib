@@ -1,10 +1,14 @@
 #include <iostream>
-#include <sys/types.h>
+#include <stdlib.h>
 #include <sys/ptrace.h>
+#include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
+
 
 namespace ContainerLib {
 class Container {
+
 public:
     using time_t = size_t;
     struct launch_options {
@@ -12,6 +16,7 @@ public:
         size_t forks_amount;
         size_t forks_threshold;
     };
+
 
 private:
     pid_t main_proc, slave_proc;
