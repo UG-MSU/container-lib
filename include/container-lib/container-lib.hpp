@@ -1,8 +1,8 @@
-#include <array>
 #include <iostream>
+#include <stdlib.h>
+#include <string>
 #include <sys/ptrace.h>
 #include <sys/types.h>
-#include <sys/user.h>
 #include <sys/wait.h>
 
 namespace ContainerLib {
@@ -26,4 +26,4 @@ class Container {
                std::string args);
     bool sync() const;
 };
-}
+} // namespace ContainerLib
