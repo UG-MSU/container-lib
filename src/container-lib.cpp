@@ -1,13 +1,28 @@
-#include <iostream>
 #include "container-lib/container-lib.hpp"
 
 void ContainerLib::Container::ptrace_process(launch_options options) const {
     int status;
-    do {
-        ptrace(PTRACE_SYSCALL, slave_proc, nullptr, nullptr);
+    waitpid(slave_proc, &status, 0);
+
+    ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
+    while (!WIFEXITED(status)) {
+
+        struct user_regs_struct state;
+
+        ptrace(PTRACE_SYSCALL, slave_proc, 0, 0);
         waitpid(slave_proc, &status, 0);
-        std::cout << status << std::endl;
-    } while (WIFEXITED(status));
+
+        // at syscall
+        if (WIFSTOPPED(status) && WSTOPSIG(status) & 0x80) {
+            ptrace(PTRACE_GETREGS, slave_proc, 0, &state);
+            std::cout << "SYSCALL " << state.orig_rax << " at " << state.rip
+                      << std::endl;
+
+            // skip after syscall
+            ptrace(PTRACE_SYSCALL, slave_proc, 0, 0);
+            waitpid(slave_proc, &status, 0);
+        }
+    }
 }
 
 void ContainerLib::Container::start(std::string path_to_binary,
@@ -16,8 +31,7 @@ void ContainerLib::Container::start(std::string path_to_binary,
     if (main_proc != 0) {
         return;
     } else {
-        create_processes(std::move(path_to_binary), std::move(args),
-                         std::move(options));
+        create_processes(std::move(path_to_binary), std::move(args), options);
     }
 }
 
@@ -28,7 +42,6 @@ bool ContainerLib::Container::sync() const {
 void ContainerLib::Container::create_processes(
     std::string path_to_binary, std::string args,
     ContainerLib::Container::launch_options options) {
-    int streams[2];
     slave_proc = fork();
     if (slave_proc != 0) {
         ptrace_process(options);
