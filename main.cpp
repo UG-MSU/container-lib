@@ -1,8 +1,7 @@
 #include "container-lib/container-lib.hpp"
-#include <iostream>
 
-int main() {
+int main(int argc, char *argv[]) {
     ContainerLib::Container cont;
-    cont.start("/home/parat07/Documents/github/container-lib/test", {}, "");
+    cont.start(argv[1], {}, "");
     cont.sync();
 }

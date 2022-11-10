@@ -1,3 +1,4 @@
+#include <array>
 #include <iostream>
 #include <sys/ptrace.h>
 #include <sys/types.h>

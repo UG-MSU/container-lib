@@ -1,6 +1,4 @@
 #include "container-lib/container-lib.hpp"
-#include <array>
-#include <iostream>
 
 void ContainerLib::Container::ptrace_process(launch_options options) const {
     int status;
@@ -44,7 +42,6 @@ bool ContainerLib::Container::sync() const {
 void ContainerLib::Container::create_processes(
     std::string path_to_binary, std::string args,
     ContainerLib::Container::launch_options options) {
-    int streams[2];
     slave_proc = fork();
     if (slave_proc != 0) {
         ptrace_process(options);
