@@ -1,4 +1,4 @@
-#include "../include/container-lib/container-lib.hpp"
+#include "container-lib/container-lib.hpp"
 
 void ContainerLib::Container::ptrace_process(launch_options options) const {
     int status;
@@ -66,8 +66,8 @@ std::string ContainerLib::Container::get_buf() const {
 
 void ContainerLib::Container::get_output() { // updates buf
     std::stringstream input;
-    char tmp[1];
-    while(read(exec2ptrace[0], tmp, sizeof(char)) != 0) {
+    char tmp;
+    while(read(exec2ptrace[0], &tmp, sizeof(char)) != 0) {
         input << tmp;
     }
     buf = input.str();
