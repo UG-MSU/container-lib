@@ -1,10 +1,8 @@
 #include <iostream>
-#include <stdlib.h>
 #include <string>
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <unistd.h>
 
 namespace ContainerLib {
 class Container {
@@ -19,9 +17,8 @@ class Container {
   private:
     pid_t main_proc, slave_proc;
     int ptrace2exec[2], exec2ptrace[2];
-    void ptrace_process(launch_options options) const;
-    void create_processes(std::string path_to_binary, std::string args,
-                          launch_options options);
+    void ptrace_process(launch_options options);
+    void create_processes(std::string path_to_binary, std::string args, launch_options options);
     void pipe_init();
 
   public:
