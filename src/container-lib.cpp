@@ -25,7 +25,8 @@ void ContainerLib::Container::ptrace_process(launch_options options) {
                     slave_proc = state.rax;
                     ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
                     waitpid(slave_proc, &status, 0);
-                    ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
+                    ptrace(PTRACE_SETOPTIONS, slave_proc, 0,
+                           PTRACE_O_TRACESYSGOOD);
                 }
                 break;
             case __NR_execve:
@@ -35,10 +36,12 @@ void ContainerLib::Container::ptrace_process(launch_options options) {
                 ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
                 ptrace(PTRACE_CONT, slave_proc, 0, 0);
                 waitpid(slave_proc, nullptr, 0);
-                std::cout << "Program broken because it called execv" << std::endl;
+                std::cout << "Program broken because it called execv"
+                          << std::endl;
                 return;
             default:
-                std::cout << "SYSCALL " << state.orig_rax << " at " << state.rip << std::endl;
+                std::cout << "SYSCALL " << state.orig_rax << " at " << state.rip
+                          << std::endl;
                 break;
             }
 
@@ -51,7 +54,7 @@ void ContainerLib::Container::ptrace_process(launch_options options) {
 
 void ContainerLib::Container::start(std::string path_to_binary,
                                     launch_options options, std::string args) {
-	pipe_init();									
+    pipe_init();
     main_proc = fork();
     if (main_proc != 0) {
         return;
@@ -62,7 +65,8 @@ void ContainerLib::Container::start(std::string path_to_binary,
 
 bool ContainerLib::Container::sync() {
     int status;
-    if (slave_proc != 0 && main_proc != 0) wait(&status);
+    if (slave_proc != 0 && main_proc != 0)
+        wait(&status);
     if (WIFEXITED(status)) {
         get_output(ptrace2main);
         return 1;
@@ -78,13 +82,12 @@ void ContainerLib::Container::create_processes(
         ptrace_process(options);
     } else {
         ptrace(PTRACE_TRACEME, 0, 0, 0);
-		dup2(ptrace2exec[0], STDIN_FILENO);
+        dup2(ptrace2exec[0], STDIN_FILENO);
         dup2(exec2ptrace[1], STDOUT_FILENO);
         execl(path_to_binary.data(), args.data(), nullptr);
         perror("execl");
     }
 }
-
 
 void ContainerLib::Container::pipe_init() {
     pipe(ptrace2exec);
@@ -92,17 +95,13 @@ void ContainerLib::Container::pipe_init() {
     pipe(ptrace2main);
 }
 
-std::string ContainerLib::Container::get_buf() const { 
-    return buf;
-}
+std::string ContainerLib::Container::get_buf() const { return buf; }
 
-void ContainerLib::Container::get_output(fd_t * fd) { // updates buf
+void ContainerLib::Container::get_output(fd_t *fd) { // updates buf
     std::stringstream input;
     char tmp;
-    while(read(fd[0], &tmp, sizeof(char)) != 0) {
+    while (read(fd[0], &tmp, sizeof(char)) != 0) {
         input << tmp;
     }
     buf = input.str();
 }
-
-
