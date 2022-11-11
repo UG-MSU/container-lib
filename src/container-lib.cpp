@@ -55,7 +55,15 @@ void ContainerLib::Container::create_processes(
     }
 }
 
-void ContainerLib::Container::pipe_init() {
+void ContainerLib::Container::pipe_init() const {
     pipe(ptrace2exec);
     pipe(exec2ptrace);
+}
+
+char * ContainerLib::Container::get_buf() const { 
+    return buf;
+}
+
+void ContainerLib::Container::get_output() const { // updates buf
+    read(exec2ptrace[0], buf, 1024);
 }

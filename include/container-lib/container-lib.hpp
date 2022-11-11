@@ -19,14 +19,17 @@ class Container {
   private:
     pid_t main_proc, slave_proc;
     int ptrace2exec[2], exec2ptrace[2];
+    char buf[1024];
     void ptrace_process(launch_options options) const;
     void create_processes(std::string path_to_binary, std::string args,
                           launch_options options);
-    void pipe_init();
+    void pipe_init() const;
+    void ContainerLib::Container::get_output() const;
 
   public:
     void start(std::string path_to_binary, launch_options options,
                std::string args);
     bool sync() const;
+    char *get_buf() const;
 };
 } // namespace ContainerLib
