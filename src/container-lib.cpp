@@ -59,3 +59,16 @@ void ContainerLib::Container::pipe_init() {
     pipe(ptrace2exec);
     pipe(exec2ptrace);
 }
+
+std::string ContainerLib::Container::get_buf() const { 
+    return buf;
+}
+
+void ContainerLib::Container::get_output() { // updates buf
+    std::stringstream input;
+    char tmp;
+    while(read(exec2ptrace[0], &tmp, sizeof(char)) != 0) {
+        input << tmp;
+    }
+    buf = input.str();
+}
