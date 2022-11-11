@@ -27,7 +27,6 @@ void ContainerLib::Container::ptrace_process(launch_options options) const {
 
 void ContainerLib::Container::start(std::string path_to_binary,
                                     launch_options options, std::string args) {
-    pipe_init();
     main_proc = fork();
     if (main_proc != 0) {
         return;
@@ -48,14 +47,7 @@ void ContainerLib::Container::create_processes(
         ptrace_process(options);
     } else {
         ptrace(PTRACE_TRACEME, 0, 0, 0);
-        dup2(ptrace2exec[0], STDIN_FILENO);
-        dup2(exec2ptrace[1], STDOUT_FILENO);
         execl(path_to_binary.data(), args.data(), nullptr);
         perror("execl");
     }
-}
-
-void ContainerLib::Container::pipe_init() {
-    pipe(ptrace2exec);
-    pipe(exec2ptrace);
 }
