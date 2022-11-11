@@ -59,8 +59,14 @@ void ContainerLib::Container::start(std::string path_to_binary,
     }
 }
 
-bool ContainerLib::Container::sync() const {
-    return waitpid(main_proc, nullptr, 0);
+bool ContainerLib::Container::sync() {
+    int status;
+    if (slave_proc != 0 && main_proc != 0) wait(&status);
+    if (WIFEXITED(status)) {
+        get_output(ptrace2main);
+        return 1;
+    }
+    return 0;
 }
 
 void ContainerLib::Container::create_processes(
@@ -86,10 +92,10 @@ std::string ContainerLib::Container::get_buf() const {
     return buf;
 }
 
-void ContainerLib::Container::get_output() { // updates buf
+void ContainerLib::Container::get_output(fd_t * fd) { // updates buf
     std::stringstream input;
     char tmp;
-    while(read(exec2ptrace[0], &tmp, sizeof(char)) != 0) {
+    while(read(fd[0], &tmp, sizeof(char)) != 0) {
         input << tmp;
     }
     buf = input.str();
