@@ -1,4 +1,4 @@
-#include "container-lib/container-lib.hpp"
+#include "../include/container-lib/container-lib.hpp"
 
 void ContainerLib::Container::ptrace_process(launch_options options) const {
     int status;
@@ -55,15 +55,20 @@ void ContainerLib::Container::create_processes(
     }
 }
 
-void ContainerLib::Container::pipe_init() const {
+void ContainerLib::Container::pipe_init() {
     pipe(ptrace2exec);
     pipe(exec2ptrace);
 }
 
-char * ContainerLib::Container::get_buf() const { 
+std::string ContainerLib::Container::get_buf() const { 
     return buf;
 }
 
-void ContainerLib::Container::get_output() const { // updates buf
-    read(exec2ptrace[0], buf, 1024);
+void ContainerLib::Container::get_output() { // updates buf
+    std::stringstream input;
+    char tmp[1];
+    while(read(exec2ptrace[0], tmp, sizeof(char)) != 0) {
+        input << tmp;
+    }
+    buf = input.str();
 }
