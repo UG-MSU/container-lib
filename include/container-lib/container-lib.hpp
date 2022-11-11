@@ -18,7 +18,7 @@ class Container {
 
   private:
     pid_t main_proc, slave_proc;
-    char *fd_1, fd_2;
+    char * fd_1[2], fd_2[2];
     void ptrace_process(launch_options options) const;
     void create_processes(std::string path_to_binary, std::string args,
                           launch_options options);

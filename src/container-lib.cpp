@@ -56,8 +56,6 @@ void ContainerLib::Container::create_processes(
 }
 
 void ContainerLib::Container::pipe_init() {
-    this->fd_1 = (char *)calloc(2, sizeof(char));
-    this->fd_2 = (char *)calloc(2, sizeof(char));
     pipe(fd_1);
     pipe(fd_2);
 }
