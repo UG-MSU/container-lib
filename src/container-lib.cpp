@@ -48,14 +48,14 @@ void ContainerLib::Container::create_processes(
         ptrace_process(options);
     } else {
         ptrace(PTRACE_TRACEME, 0, 0, 0);
-        dup2(fd_2[0], STDIN_FILENO);
-        dup2(fd_1[1], STDOUT_FILENO);
+        dup2(ptrace2exec[0], STDIN_FILENO);
+        dup2(exec2ptrace[1], STDOUT_FILENO);
         execl(path_to_binary.data(), args.data(), nullptr);
         perror("execl");
     }
 }
 
 void ContainerLib::Container::pipe_init() {
-    pipe(fd_1);
-    pipe(fd_2);
+    pipe(ptrace2exec);
+    pipe(exec2ptrace);
 }
