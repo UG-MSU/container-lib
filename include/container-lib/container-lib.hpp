@@ -19,7 +19,7 @@ class Container {
     };
 
 
-private:
+  private:
     pid_t main_proc, slave_proc;
     fd_t ptrace2exec[2], exec2ptrace[2], ptrace2main[2];
     std::string buf;
