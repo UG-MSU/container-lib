@@ -64,6 +64,7 @@ void ContainerLib::Container::create_processes(
 void ContainerLib::Container::pipe_init() {
     pipe(ptrace2exec);
     pipe(exec2ptrace);
+    pipe(ptrace2main);
 }
 
 std::string ContainerLib::Container::get_buf() const { 
