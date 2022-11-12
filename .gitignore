@@ -1,5 +1,7 @@
 .vscode/**
 
+.vscode/**
+
 # Prerequisites
 *.d
 
@@ -40,3 +42,12 @@ src/build.sh
 
 
 
+
+# debug purpose only files
+
+build/**
+src/build.sh
+
+
+
+/test
