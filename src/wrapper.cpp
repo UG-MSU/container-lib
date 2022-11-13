@@ -7,8 +7,6 @@ PYBIND11_MODULE(container_lib_py, m) {
     m.doc() = "containerization python lib";
     py::class_<Container>(m, "Container")
         .def(py::init<>())
-        .def("create_processes", &Container::create_processes,
-             "function that creates processe")
         .def("sync", &Container::sync, "sync function")
         .def("start", &Container::start,
              "starts containerization process. Launch options struct: int time "
@@ -22,3 +20,4 @@ PYBIND11_MODULE(container_lib_py, m) {
         .def_readwrite("forks_threshold",
                        &Container::launch_options::forks_threshold);
 }
+
