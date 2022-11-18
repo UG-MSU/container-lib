@@ -8,7 +8,6 @@ void ContainerLib::Container::ptrace_process(launch_options options) {
 
     ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
     while (!WIFEXITED(status)) {
-
         user_regs_struct state{};
 
         ptrace(PTRACE_SYSCALL, slave_proc, 0, 0);
@@ -27,7 +26,7 @@ void ContainerLib::Container::ptrace_process(launch_options options) {
                 ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
                 ptrace(PTRACE_CONT, slave_proc, 0, 0);
                 waitpid(slave_proc, nullptr, 0);
-                return;
+                exit(1);
             case __NR_clone:
                 std::cout << "process " << slave_proc << " tried to clone itself! killing process!" << std::endl;
                 state.rax = __NR_kill;
@@ -36,6 +35,7 @@ void ContainerLib::Container::ptrace_process(launch_options options) {
                 ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
                 ptrace(PTRACE_CONT, slave_proc, 0, 0);
                 waitpid(slave_proc, nullptr, 0);
+                exit(1);
             default:
                 std::cout << "SYSCALL " << state.orig_rax << " at " << state.rip << std::endl;
             }
@@ -47,8 +47,7 @@ void ContainerLib::Container::ptrace_process(launch_options options) {
     }
 }
 
-void ContainerLib::Container::start(std::string path_to_binary,
-                                    launch_options options, std::string args) {
+void ContainerLib::Container::start(std::string path_to_binary, launch_options options, std::string args) {
     pipe_init();
     main_proc = fork();
     if (main_proc != 0) {
@@ -60,12 +59,7 @@ void ContainerLib::Container::start(std::string path_to_binary,
 
 bool ContainerLib::Container::sync() {
     int status;
-    if (slave_proc != 0 && main_proc != 0)
-        wait(&status);
-    if (WIFEXITED(status)) {
-        get_output(ptrace2main);
-        return 1;
-    }
+    wait(&status);
     return 0;
 }
 
