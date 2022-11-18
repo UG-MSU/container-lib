@@ -9,7 +9,6 @@ void ContainerLib::Container::ptrace_process(launch_options options) {
 
     ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
     while (!WIFEXITED(status)) {
-
         user_regs_struct state{};
 
         ptrace(PTRACE_SYSCALL, slave_proc, 0, 0);
@@ -19,30 +18,26 @@ void ContainerLib::Container::ptrace_process(launch_options options) {
         if (WIFSTOPPED(status) && WSTOPSIG(status) & 0x80) {
             ptrace(PTRACE_GETREGS, slave_proc, 0, &state);
             switch (state.orig_rax) {
-            case __NR_clone:
-                if (fork() == 0) {
-                    ptrace(PTRACE_GETREGS, slave_proc, 0, &state);
-                    slave_proc = state.rax;
-                    ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
-                    waitpid(slave_proc, &status, 0);
-                    ptrace(PTRACE_SETOPTIONS, slave_proc, 0,
-                           PTRACE_O_TRACESYSGOOD);
-                }
-                break;
             case __NR_execve:
+                std::cout << "process " << slave_proc << " tried to execute a binary! killing process!" << std::endl;
                 state.rax = __NR_kill;
                 state.rdi = slave_proc;
                 state.rsi = SIGKILL;
                 ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
                 ptrace(PTRACE_CONT, slave_proc, 0, 0);
                 waitpid(slave_proc, nullptr, 0);
-                std::cout << "Program broken because it called execv"
-                          << std::endl;
-                return;
+                exit(1);
+            case __NR_clone:
+                std::cout << "process " << slave_proc << " tried to clone itself! killing process!" << std::endl;
+                state.rax = __NR_kill;
+                state.rdi = slave_proc;
+                state.rsi = SIGKILL;
+                ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
+                ptrace(PTRACE_CONT, slave_proc, 0, 0);
+                waitpid(slave_proc, nullptr, 0);
+                exit(1);
             default:
-                std::cout << "SYSCALL " << state.orig_rax << " at " << state.rip
-                          << std::endl;
-                break;
+                std::cout << "SYSCALL " << state.orig_rax << " at " << state.rip << std::endl;
             }
 
             // skip after syscall
@@ -52,8 +47,7 @@ void ContainerLib::Container::ptrace_process(launch_options options) {
     }
 }
 
-void ContainerLib::Container::start(std::string path_to_binary,
-                                    launch_options options, std::string args) {
+void ContainerLib::Container::start(std::string path_to_binary, launch_options options, std::string args) {
     pipe_init();
     main_proc = fork();
     if (main_proc != 0) {
@@ -65,12 +59,7 @@ void ContainerLib::Container::start(std::string path_to_binary,
 
 bool ContainerLib::Container::sync() {
     int status;
-    if (slave_proc != 0 && main_proc != 0)
-        wait(&status);
-    if (WIFEXITED(status)) {
-        get_output(ptrace2main);
-        return 1;
-    }
+    wait(&status);
     return 0;
 }
 
@@ -96,7 +85,6 @@ void ContainerLib::Container::pipe_init() {
 }
 
 std::string ContainerLib::Container::get_buf() const { return buf; }
-
 void ContainerLib::Container::get_output(fd_t *fd) { // updates buf
     std::stringstream input;
     char tmp;
