@@ -29,5 +29,10 @@ class Container {
   public:
     void start(std::string path_to_binary, launch_options options, std::string args);
     bool sync();
+    void start(std::string path_to_binary, launch_options options,
+               std::string args);
+    bool sync();
+    std::string get_buf() const;
 };
 } // namespace ContainerLib
+

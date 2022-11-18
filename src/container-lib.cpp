@@ -1,5 +1,6 @@
 #include "container-lib/container-lib.hpp"
 #include <asm/unistd.h>
+#include <sys/user.h>
 #include <sys/wait.h>
 
 void ContainerLib::Container::ptrace_process(launch_options options) {
@@ -16,7 +17,6 @@ void ContainerLib::Container::ptrace_process(launch_options options) {
         // at syscall
         if (WIFSTOPPED(status) && WSTOPSIG(status) & 0x80) {
             ptrace(PTRACE_GETREGS, slave_proc, 0, &state);
-
             switch (state.orig_rax) {
             case __NR_execve:
                 std::cout << "process " << slave_proc << " tried to execute a binary! killing process!" << std::endl;
@@ -84,6 +84,7 @@ void ContainerLib::Container::pipe_init() {
     pipe(ptrace2main);
 }
 
+std::string ContainerLib::Container::get_buf() const { return buf; }
 void ContainerLib::Container::get_output(fd_t *fd) { // updates buf
     std::stringstream input;
     char tmp;
