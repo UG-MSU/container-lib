@@ -43,7 +43,6 @@ void ContainerLib::Container::ptrace_process(launch_options options) const {
             ptrace(PTRACE_SYSCALL, slave_proc, 0, 0);
             waitpid(slave_proc, &status, 0);
         }
-        }
     }
 }
 
