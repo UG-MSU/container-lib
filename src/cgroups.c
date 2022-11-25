@@ -11,27 +11,29 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
-#define safe(func, call)                                                       \
+#include <stdint.h>
+#define SAFE(func, call)                                                       \
     if ((call) < 0) {                                                          \
         perror(func);                                                          \
         exit(1);                                                               \
     }
-
+const int64_t CGROUPV2_MAGIC = 1667723888;
+const int64_t CGROUPV1_MAGIC = 2613483;
 const char CGROUP_PATH[20] = "/sys/fs/cgroup";
 const char MAIN_CGROUP_PATH[20] = "/sys/fs/cgroup/yats";
 void echo_to_file(const char *path, const char *text, int len) {
     int fd;
-    safe("file open error", fd = open(path, O_WRONLY));
+    SAFE("file open error", fd = open(path, O_WRONLY));
     write(fd, text, len); // throws error but works
-    safe("file close error", close(fd));
+    SAFE("file close error", close(fd));
 }
 int cgroup_verison(const char CGROUP_PATH[50]) {
     struct statfs _buf;
-    safe("statfs error", statfs(CGROUP_PATH, &_buf));
-    long long fs_type = _buf.f_type;
-    if (fs_type == 1667723888) // v2
+    SAFE("statfs error", statfs(CGROUP_PATH, &_buf));
+    int64_t fs_type = _buf.f_type;
+    if (fs_type == CGROUPV2_MAGIC) // cgroupv2 fs magic number
         return 2;
-    if (fs_type == 2613483) // v1
+    if (fs_type == CGROUPV1_MAGIC) // cgroupv1 fs magic number
         return 1;
     else
         mount("cgroup2", CGROUP_PATH, "cgroup2", 0, NULL);
@@ -55,7 +57,7 @@ void init_cgroup(long long MEM_SIZE, float TOTAL_CPU_PERCENTAGE,
     case 2: { // cgroup v2
         sprintf(_cgroup, "%s/%s", MAIN_CGROUP_PATH, CGROUP_ID);
         mkdir(MAIN_CGROUP_PATH, 0777);
-        safe("mkdir err:", mkdir(_cgroup, 0777));
+        SAFE("mkdir err:", mkdir(_cgroup, 0777));
         chmod(_cgroup, 0777);
         char _subtreepath[100];
         char __subtreepath[100];
@@ -75,16 +77,22 @@ void init_cgroup(long long MEM_SIZE, float TOTAL_CPU_PERCENTAGE,
         break;
     }
     case 1: { // cgroupv1
-        sprintf(_cgroup, "%s/cpuset/%s", CGROUP_PATH, CGROUP_ID);
-        mkdir(_cgroup, 0777);
+        sprintf(_cgroup, "%s/cpuset/yats", CGROUP_PATH);
+        mkdir(_cgroup, 0700);
+        sprintf(_cgroup, "%s/cpuset/yats/%s", CGROUP_PATH, CGROUP_ID);
+        mkdir(_cgroup, 0700);
         sprintf(__path, "%s/cpuset.cpus", _cgroup);
         echo_to_file(__path, _str_cpu, strlen(_str_cpu)); // set random cpu core
-        sprintf(_cgroup, "%s/cpu/%s", CGROUP_PATH, CGROUP_ID);
-        mkdir(_cgroup, 0777);
+        sprintf(_cgroup, "%s/cpus/yats", CGROUP_PATH);
+        mkdir(_cgroup, 0700);
+        sprintf(_cgroup, "%s/cpu/yats/%s", CGROUP_PATH, CGROUP_ID);
+        mkdir(_cgroup, 0700);
         sprintf(__path, "%s/cpu.max", _cgroup);
         echo_to_file(__path, _cpumax, strlen(_cpumax)); // set max cpu time
-        sprintf(_cgroup, "%s/memory/%s", CGROUP_PATH, CGROUP_ID);
-        mkdir(_cgroup, 0777);
+        sprintf(_cgroup, "%s/memory/yats", CGROUP_PATH);
+        mkdir(_cgroup, 0700);
+        sprintf(_cgroup, "%s/memory/yats/%s", CGROUP_PATH, CGROUP_ID);
+        mkdir(_cgroup, 0700);
         sprintf(__path, "%s/memory.swap.max", _cgroup);
         echo_to_file(__path, "0", 1); //  disable memory swap
         sprintf(__path, "%s/memory.max", _cgroup);
@@ -109,11 +117,11 @@ void add_to_cgroup(pid_t pid, char CGROUP_ID[20]) {
         break;
     }
     case 1: {
-        sprintf(__path, "%s/cpuset/%s/tasks", CGROUP_PATH, CGROUP_ID);
+        sprintf(__path, "%s/cpuset/yats/%s/tasks", CGROUP_PATH, CGROUP_ID);
         echo_to_file(__path, _spid, strlen(_spid));
-        sprintf(__path, "%s/cpu/%s/tasks", CGROUP_PATH, CGROUP_ID);
+        sprintf(__path, "%s/cpu/yats/%s/tasks", CGROUP_PATH, CGROUP_ID);
         echo_to_file(__path, _spid, strlen(_spid));
-        sprintf(__path, "%s/memory/%s/tasks", CGROUP_PATH, CGROUP_ID);
+        sprintf(__path, "%s/memory/yats/%s/tasks", CGROUP_PATH, CGROUP_ID);
         echo_to_file(__path, _spid, strlen(_spid));
         break;
     }
@@ -126,7 +134,7 @@ void add_to_cgroup(pid_t pid, char CGROUP_ID[20]) {
 void deinit_cgroup(char CGROUP_ID[20]) {
     char __path[100];
     sprintf(__path, "%s/%s", MAIN_CGROUP_PATH, CGROUP_ID);
-    safe("deinit err", rmdir(__path));
+    SAFE("deinit err", rmdir(__path));
 }
 int main(int argc, char **argv) {
     srand(time(0));
