@@ -1,27 +1,7 @@
-#include <errno.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/mount.h>
-#include <sys/stat.h>
-#include <sys/sysinfo.h>
-#include <sys/types.h>
-#include <sys/vfs.h>
-#include <sys/wait.h>
-#include <time.h>
-#include <unistd.h>
-#include <stdint.h>
-#define SAFE(func, call)                                                       \
-    if ((call) < 0) {                                                          \
-        perror(func);                                                          \
-        exit(1);                                                               \
-    }
-const int64_t CGROUPV2_MAGIC = 1667723888;
-const int64_t CGROUPV1_MAGIC = 2613483;
-const char CGROUP_PATH[20] = "/sys/fs/cgroup";
-const char MAIN_CGROUP_PATH[20] = "/sys/fs/cgroup/yats";
+#include "container-lib/cgroups.h"
+
 void echo_to_file(const char *path, const char *text, int len) {
+
     int fd;
     SAFE("file open error", fd = open(path, O_WRONLY));
     write(fd, text, len); // throws error but works
@@ -40,9 +20,10 @@ int cgroup_verison(const char CGROUP_PATH[50]) {
     return 2; // not a cgroup fs
 }
 void init_cgroup(long long MEM_SIZE, float TOTAL_CPU_PERCENTAGE,
-                 char CGROUP_ID[20]) {
-    const int cpu_n = get_nprocs();
-    const int rand_cpu = rand() % cpu_n;
+                 char CGROUP_ID[20], int CPU) {
+    // const int cpu_n = get_nprocs();
+    // const int rand_cpu = rand() % cpu_n;
+    const int rand_cpu = CPU;
     int _cversion = cgroup_verison(CGROUP_PATH);
     char _cgroup[100];
     char __path[100];
@@ -138,7 +119,7 @@ void deinit_cgroup(char CGROUP_ID[20]) {
 }
 int main(int argc, char **argv) {
     srand(time(0));
-    init_cgroup(500000, 0.7, "test_cgroup2"); // 5000000 10
+    init_cgroup(500000, 0.7, "test_cgroup2", 4); // 5000000 10
     printf("cgroup init\n");
     pid_t pid = fork();
     if (pid == 0) {
