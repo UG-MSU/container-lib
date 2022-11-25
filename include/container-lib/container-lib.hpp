@@ -34,7 +34,7 @@ class Container {
 
   private:
     pid_t main_proc, slave_proc;
-    fd_t ptrace2exec[2], exec2ptrace[2];
+    fd_t ptrace2exec[2], exec2ptrace[2], pipe_for_exit_status[2];
     std::string buf;
     void ptrace_process(launch_options options) const;
     void create_processes(std::string path_to_binary, std::string args,
