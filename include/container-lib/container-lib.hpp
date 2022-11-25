@@ -1,3 +1,5 @@
+#include <asm/unistd.h>
+#include <cstring>
 #include <fcntl.h>
 #include <iostream>
 #include <sstream>
@@ -6,6 +8,8 @@
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/user.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 namespace ContainerLib {
 
@@ -26,11 +30,25 @@ class Container {
         size_t forks_amount;
         size_t forks_threshold;
         std::string input;
-    } options;
+    };
+
+    enum class exit_status {
+        ok,
+        compilation_error,
+        wrong_answer,
+        presentation_error,
+        time_limit_exceeded,
+        memory_limit_exceeded,
+        output_limit_exceeded,
+        run_time_error,
+        precompile_check_failed,
+        idleness_limit_exceeded
+    };
 
   private:
     pid_t ptrace_proc, slave_proc;
-    fd_t ptrace2exec[2], exec2ptrace[2], ptrace2main[2];
+    fd_t ptrace2exec[2], exec2ptrace[2], pipe_for_exit_status[2],
+        ptrace2main[2];
     std::string buf;
 
     void ptrace_process(launch_options options);
@@ -43,7 +61,7 @@ class Container {
   public:
     void start(std::string path_to_binary, launch_options options,
                std::string args);
-    bool sync();
+    exit_status sync();
     std::string get_buf() const;
 };
 } // namespace ContainerLib

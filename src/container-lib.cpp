@@ -4,9 +4,8 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 
-void ContainerLib::Container::ptrace_process(launch_options options) {
+void ContainerLib::Container::ptrace_process(launch_options options) const {
     int status, exit_status;
-    ;
     waitpid(slave_proc, &status, 0);
 
     ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
@@ -21,31 +20,31 @@ void ContainerLib::Container::ptrace_process(launch_options options) {
         // at syscall
         if (WIFSTOPPED(status) && WSTOPSIG(status) & 0x80) {
             ptrace(PTRACE_GETREGS, slave_proc, 0, &state);
+            exit_status return_status;
             switch (state.orig_rax) {
-            case __NR_clone:
-                if (fork() == 0) {
-                    ptrace(PTRACE_GETREGS, slave_proc, 0, &state);
-                    slave_proc = state.rax;
-                    ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
-                    waitpid(slave_proc, &status, 0);
-                    ptrace(PTRACE_SETOPTIONS, slave_proc, 0,
-                           PTRACE_O_TRACESYSGOOD);
-                }
-                break;
             case __NR_execve:
+                std::cout << "process " << slave_proc << " tried to execute a binary! killing process!" << std::endl;
                 state.rax = __NR_kill;
                 state.rdi = slave_proc;
                 state.rsi = SIGKILL;
                 ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
                 ptrace(PTRACE_CONT, slave_proc, 0, 0);
                 waitpid(slave_proc, nullptr, 0);
-                std::cout << "Program broken because it called execv"
-                          << std::endl;
+                return_status = exit_status::run_time_error;
+                write(pipe_for_exit_status[1], &return_status, sizeof(exit_status));
+                return;
+            case __NR_clone:
+                std::cout << "process " << slave_proc << " tried to clone itself! killing process!" << std::endl;
+                state.rax = __NR_kill;
+                state.rdi = slave_proc;
+                state.rsi = SIGKILL;
+                ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
+                ptrace(PTRACE_CONT, slave_proc, 0, 0);
+                return_status = exit_status::run_time_error;
+                write(pipe_for_exit_status[1], &return_status, sizeof(exit_status));
                 return;
             default:
-                std::cout << "SYSCALL " << state.orig_rax << " at " << state.rip
-                          << std::endl;
-                break;
+                std::cout << "SYSCALL " << state.orig_rax << " at " << state.rip << std::endl;
             }
 
             // skip after syscall
@@ -53,32 +52,36 @@ void ContainerLib::Container::ptrace_process(launch_options options) {
             waitpid(slave_proc, &status, 0);
         }
     }
+    exit_status return_status = exit_status::ok;
+    write(pipe_for_exit_status[1], &return_status, sizeof(exit_status));
     get_output(exec2ptrace);
     write_to_fd(ptrace2main, buf.c_str(), buf.size());
     exit(exit_status);
 }
 
-void ContainerLib::Container::start(std::string path_to_binary,
-                                    launch_options options, std::string args) {
+void ContainerLib::Container::start(std::string path_to_binary, launch_options options, std::string args) {
     pipe_init();
+    main_proc = fork();
+    if (main_proc != 0) {
+        close(pipe_for_exit_status[1]);
     ptrace_proc = fork();
     if (ptrace_proc != 0) {
         return;
     } else {
+        close(pipe_for_exit_status[0]);
         create_processes(std::move(path_to_binary), std::move(args), options);
     }
 }
 
-bool ContainerLib::Container::sync() {
-    int a = getpid();
+ContainerLib::Container::exit_status ContainerLib::Container::sync() const {
+    waitpid(ptrace_proc, nullptr, 0);
+    exit_status status;
     int status;
-    if (slave_proc != 0 && ptrace_proc != 0)
-        waitpid(ptrace_proc, &status, 0);
     if (WIFEXITED(status)) {
+        read(pipe_for_exit_status[0], &status, sizeof(exit_status));
         get_output(ptrace2main);
-        return 1;
+        return status;
     }
-    return 0;
 }
 
 void ContainerLib::Container::create_processes(
@@ -100,13 +103,16 @@ void ContainerLib::Container::create_processes(
 void ContainerLib::Container::pipe_init() {
     pipe(ptrace2exec);
     pipe(exec2ptrace);
+    pipe(pipe_for_exit_status);
     pipe(ptrace2main);
     fcntl(exec2ptrace[0], F_SETFL, O_NONBLOCK);
     fcntl(ptrace2main[0], F_SETFL, O_NONBLOCK);
     fcntl(ptrace2exec[0], F_SETFL, O_NONBLOCK);
 }
 
-std::string ContainerLib::Container::get_buf() const { return buf; }
+std::string ContainerLib::Container::get_buf() const { 
+    return buf;
+}
 
 void ContainerLib::Container::get_output(const fd_t *fd) { // updates buf
     std::stringstream input;
