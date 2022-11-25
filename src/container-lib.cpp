@@ -1,4 +1,5 @@
 #include "container-lib/container-lib.hpp"
+#include <asm/unistd.h>
 
 void ContainerLib::Container::ptrace_process(launch_options options) const {
     int status;
@@ -15,12 +16,33 @@ void ContainerLib::Container::ptrace_process(launch_options options) const {
         // at syscall
         if (WIFSTOPPED(status) && WSTOPSIG(status) & 0x80) {
             ptrace(PTRACE_GETREGS, slave_proc, 0, &state);
-            std::cout << "SYSCALL " << state.orig_rax << " at " << state.rip
-                      << std::endl;
+            switch (state.orig_rax) {
+            case __NR_execve:
+                std::cout << "process " << slave_proc << " tried to execute a binary! killing process!" << std::endl;
+                state.rax = __NR_kill;
+                state.rdi = slave_proc;
+                state.rsi = SIGKILL;
+                ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
+                ptrace(PTRACE_CONT, slave_proc, 0, 0);
+                waitpid(slave_proc, nullptr, 0);
+                exit(1);
+            case __NR_clone:
+                std::cout << "process " << slave_proc << " tried to clone itself! killing process!" << std::endl;
+                state.rax = __NR_kill;
+                state.rdi = slave_proc;
+                state.rsi = SIGKILL;
+                ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
+                ptrace(PTRACE_CONT, slave_proc, 0, 0);
+                waitpid(slave_proc, nullptr, 0);
+                exit(1);
+            default:
+                std::cout << "SYSCALL " << state.orig_rax << " at " << state.rip << std::endl;
+            }
 
             // skip after syscall
             ptrace(PTRACE_SYSCALL, slave_proc, 0, 0);
             waitpid(slave_proc, &status, 0);
+        }
         }
     }
 }
