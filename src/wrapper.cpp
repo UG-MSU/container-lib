@@ -9,7 +9,6 @@ PYBIND11_MODULE(container_lib_py, m) {
     py::class_<Container>(m, "Container")
         .def(py::init<>())
         .def("sync", &Container::sync, "sync function")
-        .def("get_buf", &Container::get_buf, "get buffer")
         .def("start", &Container::start,
              "starts containerization process. Launch options struct: int time "
              "- start time, int forks_amount - Amount of sub-processes, int "
