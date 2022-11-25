@@ -1,14 +1,13 @@
 #include "container-lib/container-lib.hpp"
 #include <asm/unistd.h>
-#include <sys/user.h>
-#include <sys/wait.h>
 
-void ContainerLib::Container::ptrace_process(launch_options options) {
+void ContainerLib::Container::ptrace_process(launch_options options) const {
     int status;
     waitpid(slave_proc, &status, 0);
 
     ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
     while (!WIFEXITED(status)) {
+
         user_regs_struct state{};
 
         ptrace(PTRACE_SYSCALL, slave_proc, 0, 0);
@@ -57,10 +56,9 @@ void ContainerLib::Container::start(std::string path_to_binary, launch_options o
     }
 }
 
-bool ContainerLib::Container::sync() {
-    int status;
-    wait(&status);
-    return 0;
+ContainerLib::Container::exit_status ContainerLib::Container::sync() const {
+    waitpid(main_proc, nullptr, 0);
+    return exit_status::ok;
 }
 
 void ContainerLib::Container::create_processes(
@@ -81,14 +79,16 @@ void ContainerLib::Container::create_processes(
 void ContainerLib::Container::pipe_init() {
     pipe(ptrace2exec);
     pipe(exec2ptrace);
-    pipe(ptrace2main);
 }
 
-std::string ContainerLib::Container::get_buf() const { return buf; }
-void ContainerLib::Container::get_output(fd_t *fd) { // updates buf
+std::string ContainerLib::Container::get_buf() const { 
+    return buf;
+}
+
+void ContainerLib::Container::get_output() { // updates buf
     std::stringstream input;
     char tmp;
-    while (read(fd[0], &tmp, sizeof(char)) != 0) {
+    while(read(exec2ptrace[0], &tmp, sizeof(char)) != 0) {
         input << tmp;
     }
     buf = input.str();
