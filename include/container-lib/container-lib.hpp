@@ -19,6 +19,19 @@ class Container {
         size_t forks_threshold;
     };
 
+    enum class exit_status {
+        ok,
+        compilation_error,
+        wrong_answer,
+        presentation_error,
+        time_limit_exceeded,
+        memory_limit_exceeded,
+        output_limit_exceeded,
+        run_time_error,
+        precompile_check_failed,
+        idleness_limit_exceeded
+    };
+
   private:
     pid_t main_proc, slave_proc;
     fd_t ptrace2exec[2], exec2ptrace[2];
@@ -32,7 +45,7 @@ class Container {
   public:
     void start(std::string path_to_binary, launch_options options,
                std::string args);
-    bool sync() const;
+    exit_status sync() const;
     std::string get_buf() const;
 };
 } // namespace ContainerLib

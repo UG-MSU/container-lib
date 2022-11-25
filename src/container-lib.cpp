@@ -7,7 +7,7 @@ void ContainerLib::Container::ptrace_process(launch_options options) const {
     ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
     while (!WIFEXITED(status)) {
 
-        struct user_regs_struct state;
+        user_regs_struct state;
 
         ptrace(PTRACE_SYSCALL, slave_proc, 0, 0);
         waitpid(slave_proc, &status, 0);
@@ -25,8 +25,7 @@ void ContainerLib::Container::ptrace_process(launch_options options) const {
     }
 }
 
-void ContainerLib::Container::start(std::string path_to_binary,
-                                    launch_options options, std::string args) {
+void ContainerLib::Container::start(std::string path_to_binary, launch_options options, std::string args) {
     pipe_init();
     main_proc = fork();
     if (main_proc != 0) {
@@ -36,8 +35,9 @@ void ContainerLib::Container::start(std::string path_to_binary,
     }
 }
 
-bool ContainerLib::Container::sync() const {
-    return waitpid(main_proc, nullptr, 0);
+ContainerLib::Container::exit_status ContainerLib::Container::sync() const {
+    waitpid(main_proc, nullptr, 0);
+    return exit_status::ok;
 }
 
 void ContainerLib::Container::create_processes(
