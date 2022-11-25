@@ -8,7 +8,7 @@ void ContainerLib::Container::ptrace_process(launch_options options) const {
     ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
     while (!WIFEXITED(status)) {
 
-        user_regs_struct state;
+        user_regs_struct state{};
 
         ptrace(PTRACE_SYSCALL, slave_proc, 0, 0);
         waitpid(slave_proc, &status, 0);
