@@ -3,7 +3,9 @@
 void echo_to_file(const char *path, const char *text, int len) {
     int fd;
     SAFE("file open error", fd = open(path, O_WRONLY));
-    write(fd, text, len); // throws error but works
+    if(len != write(fd, text, len)) {
+        perror("write error");
+    } 
     SAFE("file close error", close(fd));
 }
 int cgroup_verison(const char CGROUP_PATH[50]) {
@@ -30,7 +32,7 @@ void init_cgroup(long long MEM_SIZE, float TOTAL_CPU_PERCENTAGE,
     char _cpumax[30];
     char _memorymax[30];
     sprintf(_str_cpu, "%i", rand_cpu);
-    sprintf(_cpumax, "%lli %lli", (int)(1000000 * TOTAL_CPU_PERCENTAGE),
+    sprintf(_cpumax, "%lli %lli", (long long int)(1000000 * TOTAL_CPU_PERCENTAGE),
             1000000);
     sprintf(_memorymax, "%lli", MEM_SIZE * 1024);
     switch (_cversion) {
@@ -115,21 +117,4 @@ void deinit_cgroup(char CGROUP_ID[20]) {
     char __path[100];
     sprintf(__path, "%s/%s", MAIN_CGROUP_PATH, CGROUP_ID);
     SAFE("deinit err", rmdir(__path));
-}
-int main(int argc, char **argv) {
-    srand(time(0));
-    init_cgroup(500000, 0.7, "test_cgroup2", 4); // 5000000 10
-    printf("cgroup init\n");
-    pid_t pid = fork();
-    if (pid == 0) {
-        execl("./test", "");
-    } else {
-        printf("i'm parent, child pid: %i\n", pid);
-        int status;
-        add_to_cgroup(pid, "test_cgroup2");
-        wait(&status);
-        printf("child ended with %i\n", status);
-        deinit_cgroup("test_cgroup2");
-    }
-    return 0;
 }

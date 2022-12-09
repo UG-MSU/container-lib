@@ -1,3 +1,5 @@
+#ifndef CONTAINER_LIB_HPP
+#define CONTAINER_LIB_HPP
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -49,3 +51,4 @@ class Container {
     std::string get_buf() const;
 };
 } // namespace ContainerLib
+#endif CONTAINER_LIB_HPP
