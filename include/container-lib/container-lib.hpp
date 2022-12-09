@@ -1,3 +1,5 @@
+#ifndef CONTAINER_LIB_HPP
+#define CONTAINER_LIB_HPP
 #include <asm/unistd.h>
 #include <cstring>
 #include <fcntl.h>
@@ -67,3 +69,4 @@ class Container {
     std::string get_buf() const;
 };
 } // namespace ContainerLib
+#endif CONTAINER_LIB_HPP

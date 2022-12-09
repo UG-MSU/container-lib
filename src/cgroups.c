@@ -3,7 +3,9 @@
 void echo_to_file(const char *path, const char *text, int len) {
     int fd;
     SAFE("file open error", fd = open(path, O_WRONLY));
-    write(fd, text, len); // throws error but works
+    if(len != write(fd, text, len)) {
+        perror("write error");
+    } 
     SAFE("file close error", close(fd));
 }
 int cgroup_verison(const char CGROUP_PATH[50]) {
@@ -30,7 +32,7 @@ void init_cgroup(long long MEM_SIZE, float TOTAL_CPU_PERCENTAGE,
     char _cpumax[30];
     char _memorymax[30];
     sprintf(_str_cpu, "%i", rand_cpu);
-    sprintf(_cpumax, "%lli %lli", (int)(1000000 * TOTAL_CPU_PERCENTAGE),
+    sprintf(_cpumax, "%lli %lli", (long long int)(1000000 * TOTAL_CPU_PERCENTAGE),
             1000000);
     sprintf(_memorymax, "%lli", MEM_SIZE * 1024);
     switch (_cversion) {
