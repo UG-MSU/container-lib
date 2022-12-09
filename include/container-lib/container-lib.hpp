@@ -30,6 +30,8 @@ class Container {
         size_t forks_amount;
         size_t forks_threshold;
         std::string input;
+        int memory;
+        float cpu_usage;
     };
 
     enum class exit_status {

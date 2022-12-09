@@ -1,5 +1,5 @@
 #include "container-lib/container-lib.hpp"
-
+#include "container-lib/cgroups.h"
 void ContainerLib::Container::ptrace_process(launch_options options) {
     int status, exit_status;
     waitpid(slave_proc, &status, 0);
@@ -67,6 +67,7 @@ void ContainerLib::Container::start(std::string path_to_binary, launch_options o
     ptrace_proc = fork();
     if (ptrace_proc != 0) {
         close(pipe_for_exit_status[1]);
+        init_cgroup(options.memory, options.cpu_usage, "container", 5); 
         return;
     } else {
         close(pipe_for_exit_status[0]);
@@ -81,6 +82,7 @@ ContainerLib::Container::exit_status ContainerLib::Container::sync() {
     if (WIFEXITED(ptrace_status)) {
         read(pipe_for_exit_status[0], &status, sizeof(exit_status));
         get_output(ptrace2main);
+        deinit_cgroup("container");
         return status;
     }
 }
@@ -96,6 +98,7 @@ void ContainerLib::Container::create_processes(
         write_to_fd(ptrace2exec, options.input.c_str(), options.input.size());
         dup2(ptrace2exec[0], STDIN_FILENO);
         dup2(exec2ptrace[1], STDOUT_FILENO);
+        add_to_cgroup(getpid(), "container");
         execl(path_to_binary.data(), args.data(), nullptr);
         perror("execl");
     }

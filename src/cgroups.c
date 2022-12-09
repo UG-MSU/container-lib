@@ -116,20 +116,20 @@ void deinit_cgroup(char CGROUP_ID[20]) {
     sprintf(__path, "%s/%s", MAIN_CGROUP_PATH, CGROUP_ID);
     SAFE("deinit err", rmdir(__path));
 }
-int main(int argc, char **argv) {
-    srand(time(0));
-    init_cgroup(500000, 0.7, "test_cgroup2", 4); // 5000000 10
-    printf("cgroup init\n");
-    pid_t pid = fork();
-    if (pid == 0) {
-        execl("./test", "");
-    } else {
-        printf("i'm parent, child pid: %i\n", pid);
-        int status;
-        add_to_cgroup(pid, "test_cgroup2");
-        wait(&status);
-        printf("child ended with %i\n", status);
-        deinit_cgroup("test_cgroup2");
-    }
-    return 0;
-}
+// int main(int argc, char **argv) {
+//     srand(time(0));
+//     init_cgroup(500000, 0.7, "test_cgroup2", 4); // 5000000 10
+//     printf("cgroup init\n");
+//     pid_t pid = fork();
+//     if (pid == 0) {
+//         execl("./test", "");
+//     } else {
+//         printf("i'm parent, child pid: %i\n", pid);
+//         int status;
+//         add_to_cgroup(pid, "test_cgroup2");
+//         wait(&status);
+//         printf("child ended with %i\n", status);
+//         deinit_cgroup("test_cgroup2");
+//     }
+//     return 0;
+// }

@@ -14,6 +14,21 @@
 #include <time.h>
 #include <unistd.h>
 
+#ifdef __cplusplus
+extern "C"{
+#endif 
+
+void echo_to_file(const char *path, const char *text, int len);
+int cgroup_verison(const char CGROUP_PATH[50]);
+void init_cgroup(long long MEM_SIZE, float TOTAL_CPU_PERCENTAGE,
+                 char CGROUP_ID[20], int CPU);
+void add_to_cgroup(pid_t pid, char CGROUP_ID[20]);
+void deinit_cgroup(char CGROUP_ID[20]);
+
+#ifdef __cplusplus
+}
+#endif
+
 #define SAFE(func, call)                                                       \
     if ((call) < 0) {                                                          \
         perror(func);                                                          \
