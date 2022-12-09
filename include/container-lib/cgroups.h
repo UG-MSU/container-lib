@@ -1,4 +1,5 @@
-
+#ifndef CGROUPS_H
+#define CGROUPS_H
 #include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
@@ -31,3 +32,4 @@ void init_cgroup(long long MEM_SIZE, float TOTAL_CPU_PERCENTAGE,
                  char CGROUP_ID[20], int CPU);
 void add_to_cgroup(pid_t pid, char CGROUP_ID[20]);
 void deinit_cgroup(char CGROUP_ID[20]);
+#endif CGROUPS_H
