@@ -45,6 +45,14 @@ void ContainerLib::Container::ptrace_process(launch_options options) {
                 write(pipe_for_exit_status[1], &return_status,
                       sizeof(exit_status));
                 return;
+            case __NR_fork:
+                std::cout << "Process with " << slave_proc << " pid forked to process with " << state.rax << " pid" << std::endl;
+                if (fork() == 0) {
+                    slave_proc = state.rax;
+                    ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
+                    waitpid(slave_proc, &status, 0);
+                    ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
+                }
             default:
                 std::cout << "SYSCALL " << state.orig_rax << " at " << state.rip
                           << std::endl;
