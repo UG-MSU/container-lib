@@ -17,8 +17,6 @@ system that smells *bebra* and gives rating for it
 - Calculate working time and memory usage
 
 ## Ideas
-- HTTP contests
 - CTF
-- Dedicated Linux user for contest(contests for bigger projects)
 - just use docker
 - github linkage
