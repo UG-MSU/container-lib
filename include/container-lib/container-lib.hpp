@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <iostream>
 #include <sstream>
+#include <set>
 #include <stdlib.h>
 #include <string>
 #include <sys/ptrace.h>
@@ -47,22 +48,39 @@ class Container {
         idleness_limit_exceeded
     };
 
+    enum class syscall {
+        kill,
+        fork,
+        clone,
+        vfork,
+        execve,
+        mkdir,
+        rmdir,
+        reboot,
+        open,
+        openat,
+        sethostname,
+        setdomainname,
+        creat,
+        connect
+    };
+
   private:
     pid_t ptrace_proc, slave_proc;
     fd_t ptrace2exec[2], exec2ptrace[2], pipe_for_exit_status[2],
         ptrace2main[2];
     std::string buf;
 
-    void ptrace_process(launch_options options);
+    void ptrace_process(launch_options options, std::set<syscall> forbidden_syscalls);
     void create_processes(std::string path_to_binary, std::string args,
-                          launch_options options);
+                          launch_options options, std::set<syscall> forbidden_syscalls);
     void pipe_init();
     void get_output(const fd_t *fd);
     void write_to_fd(const fd_t *fd, const char *string, size_t size);
 
   public:
     void start(std::string path_to_binary, launch_options options,
-               std::string args);
+               std::string args, std::set<syscall> forbidden_syscalls);
     exit_status sync();
     std::string get_buf() const;
 };
