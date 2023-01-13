@@ -1,4 +1,4 @@
-# Yet Another testing system
+# **YATS** - _Yet Another Testing System_
 
 system that smells *bebra* and gives rating for it
 ![alt text](https://media.istockphoto.com/id/182203609/ru/%D1%84%D0%BE%D1%82%D0%BE/%D0%BF%D0%B0%D0%BB%D0%B5%D1%86-%D0%B2%D0%B2%D0%B5%D1%80%D1%85.jpg?s=1024x1024&w=is&k=20&c=f1IwGeHj3E52Cmif8WhdDxL2qcnGGaJvQARQ43RiMIo=) testing jew 
