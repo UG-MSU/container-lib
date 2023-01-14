@@ -1,6 +1,6 @@
 #include "container-lib/container-lib.hpp"
 
-void ContainerLib::Container::ptrace_process(launch_options options, std::set<syscall> forbidden_syscalls) {
+void ContainerLib::Container::ptrace_process(launch_options options) {
     int status, exit_status;
     waitpid(slave_proc, &status, 0);
 
@@ -19,254 +19,40 @@ void ContainerLib::Container::ptrace_process(launch_options options, std::set<sy
             ContainerLib::Container::exit_status return_status;
             switch (state.orig_rax) {
             case __NR_execve:
-                if (forbidden_syscalls.count(syscall::execve)) {
-                    std::cout << "process " << slave_proc
-                              << " tried to execute a binary! killing process!"
-                              << std::endl;
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    waitpid(slave_proc, nullptr, 0);
-                    return_status = exit_status::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
+                std::cout << "process " << slave_proc
+                          << " tried to execute a binary! killing process!"
+                          << std::endl;
+                state.rax = __NR_kill;
+                state.rdi = slave_proc;
+                state.rsi = SIGKILL;
+                ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
+                ptrace(PTRACE_CONT, slave_proc, 0, 0);
+                waitpid(slave_proc, nullptr, 0);
+                return_status = exit_status::run_time_error;
+                write(pipe_for_exit_status[1], &return_status,
+                      sizeof(exit_status));
+                return;
             case __NR_clone:
-                if (forbidden_syscalls.count(syscall::clone)) {
-                    std::cout << "process " << slave_proc
-                              << " tried to clone itself! killing process!"
-                              << std::endl;
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    return_status = exit_status::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                else {
-                    std::cout << "Process with " << slave_proc << " pid forked to process with " << state.rax << " pid" << std::endl;
-                    if (fork() == 0) {
-                        slave_proc = state.rax;
-                        ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
-                        waitpid(slave_proc, &status, 0);
-                        ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
-                    }
-                }
-                break;
+                std::cout << "process " << slave_proc
+                          << " tried to clone itself! killing process!"
+                          << std::endl;
+                state.rax = __NR_kill;
+                state.rdi = slave_proc;
+                state.rsi = SIGKILL;
+                ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
+                ptrace(PTRACE_CONT, slave_proc, 0, 0);
+                return_status = exit_status::run_time_error;
+                write(pipe_for_exit_status[1], &return_status,
+                      sizeof(exit_status));
+                return;
             case __NR_fork:
-                if (forbidden_syscalls.count(syscall::fork)) {
-                    std::cout << "process " << slave_proc
-                              << " tried to clone itself! killing process!"
-                              << std::endl;
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    return_status = exit_status::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
+                std::cout << "Process with " << slave_proc << " pid forked to process with " << state.rax << " pid" << std::endl;
+                if (fork() == 0) {
+                    slave_proc = state.rax;
+                    ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
+                    waitpid(slave_proc, &status, 0);
+                    ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
                 }
-                else {
-                    std::cout << "Process with " << slave_proc << " pid forked to process with " << state.rax << " pid" << std::endl;
-                    if (fork() == 0) {
-                        slave_proc = state.rax;
-                        ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
-                        waitpid(slave_proc, &status, 0);
-                        ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
-                    }
-                }
-                break;
-
-            case __NR_kill:
-                if (forbidden_syscalls.count(syscall::kill)) {
-                    std::cout << "process " << slave_proc
-                              << " tried to clone itself! killing process!"
-                              << std::endl;
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    return_status = exit_status::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_vfork:
-                if (forbidden_syscalls.count(syscall::vfork)) {
-                    std::cout << "process " << slave_proc
-                              << " tried to clone itself! killing process!"
-                              << std::endl;
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    return_status = exit_status::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_mkdir:
-                if (forbidden_syscalls.count(syscall::mkdir)) {
-                    std::cout << "process " << slave_proc
-                              << " tried to clone itself! killing process!"
-                              << std::endl;
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    return_status = exit_status::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_rmdir:
-                if (forbidden_syscalls.count(syscall::rmdir)) {
-                    std::cout << "process " << slave_proc
-                              << " tried to clone itself! killing process!"
-                              << std::endl;
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    return_status = exit_status::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_reboot:
-                if (forbidden_syscalls.count(syscall::reboot)) {
-                    std::cout << "process " << slave_proc
-                              << " tried to clone itself! killing process!"
-                              << std::endl;
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    return_status = exit_status::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_open:
-                if (forbidden_syscalls.count(syscall::open)) {
-                    std::cout << "process " << slave_proc
-                              << " tried to execute a binary! killing process!"
-                              << std::endl;
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    waitpid(slave_proc, nullptr, 0);
-                    return_status = exit_status::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_openat:
-                if (forbidden_syscalls.count(syscall::openat)) {
-                    std::cout << "process " << slave_proc
-                              << " tried to execute a binary! killing process!"
-                              << std::endl;
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    waitpid(slave_proc, nullptr, 0);
-                    return_status = exit_status::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_sethostname:
-                if (forbidden_syscalls.count(syscall::sethostname)) {
-                    std::cout << "process " << slave_proc
-                              << " tried to execute a binary! killing process!"
-                              << std::endl;
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    waitpid(slave_proc, nullptr, 0);
-                    return_status = exit_status::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_setdomainname:
-                if (forbidden_syscalls.count(syscall::setdomainname)) {
-                    std::cout << "process " << slave_proc
-                              << " tried to execute a binary! killing process!"
-                              << std::endl;
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    waitpid(slave_proc, nullptr, 0);
-                    return_status = exit_status::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_creat:
-                if (forbidden_syscalls.count(syscall::creat)) {
-                    std::cout << "process " << slave_proc
-                              << " tried to execute a binary! killing process!"
-                              << std::endl;
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    waitpid(slave_proc, nullptr, 0);
-                    return_status = exit_status::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_connect:
-                if (forbidden_syscalls.count(syscall::connect)) {
-                    std::cout << "process " << slave_proc
-                              << " tried to execute a binary! killing process!"
-                              << std::endl;
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    waitpid(slave_proc, nullptr, 0);
-                    return_status = exit_status::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
             default:
                 std::cout << "SYSCALL " << state.orig_rax << " at " << state.rip
                           << std::endl;
@@ -284,7 +70,7 @@ void ContainerLib::Container::ptrace_process(launch_options options, std::set<sy
     exit(exit_status);
 }
 
-void ContainerLib::Container::start(std::string path_to_binary, launch_options options, std::string args, std::set<syscall> forbidden_syscalls) {
+void ContainerLib::Container::start(std::string path_to_binary, launch_options options, std::string args) {
     pipe_init();
     ptrace_proc = fork();
     if (ptrace_proc != 0) {
@@ -292,7 +78,7 @@ void ContainerLib::Container::start(std::string path_to_binary, launch_options o
         return;
     } else {
         close(pipe_for_exit_status[0]);
-        create_processes(std::move(path_to_binary), std::move(args), options, forbidden_syscalls);
+        create_processes(std::move(path_to_binary), std::move(args), options);
     }
 }
 
@@ -309,10 +95,10 @@ ContainerLib::Container::exit_status ContainerLib::Container::sync() {
 
 void ContainerLib::Container::create_processes(
     std::string path_to_binary, std::string args,
-    ContainerLib::Container::launch_options options, std::set<syscall> forbidden_syscalls) {
+    ContainerLib::Container::launch_options options) {
     slave_proc = fork();
     if (slave_proc != 0) {
-        ptrace_process(options, forbidden_syscalls);
+        ptrace_process(options);
     } else {
         ptrace(PTRACE_TRACEME, 0, 0, 0);
         write_to_fd(ptrace2exec, options.input.c_str(), options.input.size());
