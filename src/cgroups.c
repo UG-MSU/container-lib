@@ -21,7 +21,7 @@ int cgroup_verison(const char CGROUP_PATH[50]) {
     return 2; // not a cgroup fs
 }
 void init_cgroup(long long MEM_SIZE, float TOTAL_CPU_PERCENTAGE,
-                 char CGROUP_ID[20], int CPU) {
+                 const char CGROUP_ID[20], int CPU) {
     // const int cpu_n = get_nprocs();
     // const int rand_cpu = rand() % cpu_n;
     const int rand_cpu = CPU;
@@ -86,7 +86,7 @@ void init_cgroup(long long MEM_SIZE, float TOTAL_CPU_PERCENTAGE,
         exit(1);
     }
 }
-void add_to_cgroup(pid_t pid, char CGROUP_ID[20]) {
+void add_to_cgroup(pid_t pid, const char CGROUP_ID[20]) {
     int _cversion = cgroup_verison(CGROUP_PATH);
     char _spid[20];
     char __path[100];
@@ -113,7 +113,7 @@ void add_to_cgroup(pid_t pid, char CGROUP_ID[20]) {
     }
 }
 
-void deinit_cgroup(char CGROUP_ID[20]) {
+void deinit_cgroup(const char CGROUP_ID[20]) {
     char __path[100];
     sprintf(__path, "%s/%s", MAIN_CGROUP_PATH, CGROUP_ID);
     SAFE("deinit err", rmdir(__path));

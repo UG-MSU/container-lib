@@ -36,7 +36,7 @@ class Container {
         size_t forks_threshold;
         std::string input;
         uint32_t memory;
-        char cgroup_id[20];
+        std::string cgroup_id;
         float cpu_usage;
     };
 
@@ -69,7 +69,7 @@ class Container {
   public:
     void start(std::string path_to_binary, launch_options options,
                std::string args);
-    exit_status sync(char cgroup_id[20]);
+    exit_status sync(const char cgroup_id[20]);
     std::string get_buf() const;
 };
 } // namespace ContainerLib

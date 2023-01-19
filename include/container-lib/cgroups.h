@@ -22,9 +22,9 @@ extern "C"{
 void echo_to_file(const char *path, const char *text, int len);
 int cgroup_verison(const char CGROUP_PATH[50]);
 void init_cgroup(long long MEM_SIZE, float TOTAL_CPU_PERCENTAGE,
-                 char CGROUP_ID[20], int CPU);
-void add_to_cgroup(pid_t pid, char CGROUP_ID[20]);
-void deinit_cgroup(char CGROUP_ID[20]);
+                 const char CGROUP_ID[20], int CPU);
+void add_to_cgroup(pid_t pid, const char CGROUP_ID[20]);
+void deinit_cgroup(const char CGROUP_ID[20]);
 
 #ifdef __cplusplus
 }
@@ -44,7 +44,7 @@ const char MAIN_CGROUP_PATH[20] = "/sys/fs/cgroup/yats";
 void echo_to_file(const char *path, const char *text, int len);
 int cgroup_verison(const char CGROUP_PATH[50]);
 void init_cgroup(long long MEM_SIZE, float TOTAL_CPU_PERCENTAGE,
-                 char CGROUP_ID[20], int CPU);
-void add_to_cgroup(pid_t pid, char CGROUP_ID[20]);
-void deinit_cgroup(char CGROUP_ID[20]);
+                 const char CGROUP_ID[20], int CPU);
+void add_to_cgroup(pid_t pid, const char CGROUP_ID[20]);
+void deinit_cgroup(const char CGROUP_ID[20]);
 #endif CGROUPS_H
