@@ -12,6 +12,9 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <cstdlib>
+#include <ctime>
+#include <string>
 
 namespace ContainerLib {
 
@@ -32,8 +35,9 @@ class Container {
         size_t forks_amount;
         size_t forks_threshold;
         std::string input;
-        int memory;
-        float cpu_usage;
+        uint32_t memory;
+        char cgroup_id[20];
+        float cpu_percentage;
     };
 
     enum class exit_status {
@@ -65,7 +69,7 @@ class Container {
   public:
     void start(std::string path_to_binary, launch_options options,
                std::string args);
-    exit_status sync();
+    exit_status sync(char cgroup_id[20]);
     std::string get_buf() const;
 };
 } // namespace ContainerLib
