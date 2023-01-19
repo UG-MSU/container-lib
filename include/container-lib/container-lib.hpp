@@ -37,7 +37,7 @@ class Container {
         std::string input;
         uint32_t memory;
         char cgroup_id[20];
-        float cpu_percentage;
+        float cpu_usage;
     };
 
     enum class exit_status {

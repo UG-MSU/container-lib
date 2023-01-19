@@ -63,11 +63,13 @@ void ContainerLib::Container::ptrace_process(launch_options options) {
 }
 
 void ContainerLib::Container::start(std::string path_to_binary, launch_options options, std::string args) {
+    int numCPU = sysconf(_SC_NPROCESSORS_ONLN);
+    int coreCPU = std::rand()%numCPU;
+    init_cgroup(options.memory, options.cpu_usage, options.cgroup_id, coreCPU); 
     pipe_init();
     ptrace_proc = fork();
     if (ptrace_proc != 0) {
         close(pipe_for_exit_status[1]);
-        init_cgroup(options.memory, options.cpu_usage, "container", 5); 
         return;
     } else {
         close(pipe_for_exit_status[0]);
@@ -75,14 +77,14 @@ void ContainerLib::Container::start(std::string path_to_binary, launch_options o
     }
 }
 
-ContainerLib::Container::exit_status ContainerLib::Container::sync() {
+ContainerLib::Container::exit_status ContainerLib::Container::sync(char cgroup_id[20]) {
     int ptrace_status;
     waitpid(ptrace_proc, &ptrace_status, 0);
     exit_status status;
     if (WIFEXITED(ptrace_status)) {
         read(pipe_for_exit_status[0], &status, sizeof(exit_status));
         get_output(ptrace2main);
-        deinit_cgroup("container");
+        deinit_cgroup(cgroup_id);
         return status;
     }
 }
@@ -98,7 +100,7 @@ void ContainerLib::Container::create_processes(
         write_to_fd(ptrace2exec, options.input.c_str(), options.input.size());
         dup2(ptrace2exec[0], STDIN_FILENO);
         dup2(exec2ptrace[1], STDOUT_FILENO);
-        add_to_cgroup(getpid(), "container");
+        add_to_cgroup(getpid(), options.cgroup_id);
         execl(path_to_binary.data(), args.data(), nullptr);
         perror("execl");
     }

@@ -41,5 +41,6 @@ PYBIND11_MODULE(container_lib_py, m) {
         .def_readwrite("forks_threshold",
                        &Container::launch_options::forks_threshold)
         .def_readwrite("cpu_usage", &Container::launch_options::cpu_usage)
-        .def_readwrite("memory", &Container::launch_options::memory);
+        .def_readwrite("memory", &Container::launch_options::memory)
+        .def_readwrite("cgroup_id", &Container::launch_options::cgroup_id);
 }
