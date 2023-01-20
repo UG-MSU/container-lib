@@ -13,7 +13,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <cstdlib>
-#include <ctime>
 #include <string>
 
 namespace ContainerLib {
