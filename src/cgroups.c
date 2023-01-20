@@ -20,7 +20,7 @@ int cgroup_verison(const char CGROUP_PATH[50]) {
         mount("cgroup2", CGROUP_PATH, "cgroup2", 0, NULL);
     return 2; // not a cgroup fs
 }
-void init_cgroup(long long MEM_SIZE, float TOTAL_CPU_PERCENTAGE,
+void init_cgroup(uint32_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
                  const char CGROUP_ID[20], int CPU) {
     // const int cpu_n = get_nprocs();
     // const int rand_cpu = rand() % cpu_n;

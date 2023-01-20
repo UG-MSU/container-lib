@@ -1,5 +1,6 @@
 #include "container-lib/container-lib.hpp"
 #include "container-lib/cgroups.h"
+#include <random>
 void ContainerLib::Container::ptrace_process(launch_options options) {
     int status, exit_status;
     waitpid(slave_proc, &status, 0);
@@ -63,8 +64,10 @@ void ContainerLib::Container::ptrace_process(launch_options options) {
 }
 
 void ContainerLib::Container::start(std::string path_to_binary, launch_options options, std::string args) {
-    int numCPU = sysconf(_SC_NPROCESSORS_ONLN);
-    int coreCPU = std::rand()%numCPU;
+    std::random_device r;
+    std::default_random_engine e(r());
+     std::uniform_int_distribution<int> uniform_dist(0, 16);
+    int coreCPU = uniform_dist(e);
     init_cgroup(options.memory, options.cpu_usage, options.cgroup_id.c_str(), coreCPU); 
     pipe_init();
     ptrace_proc = fork();
