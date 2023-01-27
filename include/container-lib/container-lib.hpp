@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <iostream>
 #include <sstream>
+#include <set>
 #include <stdlib.h>
 #include <string>
 #include <sys/ptrace.h>
@@ -39,7 +40,7 @@ class Container {
         double cpu_usage;
     };
 
-    enum class exit_status {
+    enum class ExitStatus {
         ok,
         compilation_error,
         wrong_answer,
@@ -52,23 +53,40 @@ class Container {
         idleness_limit_exceeded
     };
 
+    enum class Syscall {
+        kill,
+        fork,
+        clone,
+        vfork,
+        execve,
+        mkdir,
+        rmdir,
+        reboot,
+        open,
+        openat,
+        sethostname,
+        setdomainname,
+        creat,
+        connect
+    };
+
   private:
     pid_t ptrace_proc, slave_proc;
     fd_t ptrace2exec[2], exec2ptrace[2], pipe_for_exit_status[2],
         ptrace2main[2];
     std::string buf;
 
-    void ptrace_process(launch_options options);
+    void ptrace_process(launch_options options, std::set<Syscall> forbidden_syscalls);
     void create_processes(std::string path_to_binary, std::string args,
-                          launch_options options);
+                          launch_options options, std::set<Syscall> forbidden_syscalls);
     void pipe_init();
     void get_output(const fd_t *fd);
     void write_to_fd(const fd_t *fd, const char *string, size_t size);
 
   public:
     void start(std::string path_to_binary, launch_options options,
-               std::string args);
-    exit_status sync(const char cgroup_id[20]);
+               std::string args, std::set<Syscall> forbidden_syscalls);
+    ExitStatus sync(const char cgroup_id[20]);
     std::string get_buf() const;
 };
 } // namespace ContainerLib

@@ -1,13 +1,14 @@
-#include "container-lib/cgroups.h"
+#include "container-lib/cgroups.hpp"
 
 void echo_to_file(const char *path, const char *text, int len) {
     int fd;
     SAFE("file open error", fd = open(path, O_WRONLY));
-    if(len != write(fd, text, len)) {
+    if (len != write(fd, text, len)) {
         perror("write error");
-    } 
+    }
     SAFE("file close error", close(fd));
 }
+
 int cgroup_verison(const char CGROUP_PATH[50]) {
     struct statfs _buf;
     SAFE("statfs error", statfs(CGROUP_PATH, &_buf));
@@ -20,6 +21,7 @@ int cgroup_verison(const char CGROUP_PATH[50]) {
         mount("cgroup2", CGROUP_PATH, "cgroup2", 0, NULL);
     return 2; // not a cgroup fs
 }
+
 void init_cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
                  const char CGROUP_ID[20], int CPU) {
     // const int cpu_n = get_nprocs();
@@ -86,6 +88,7 @@ void init_cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
         exit(1);
     }
 }
+
 void add_to_cgroup(pid_t pid, const char CGROUP_ID[20]) {
     int _cversion = cgroup_verison(CGROUP_PATH);
     char _spid[20];

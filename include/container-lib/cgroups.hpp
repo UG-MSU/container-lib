@@ -15,13 +15,6 @@
 #include <time.h>
 #include <unistd.h>
 
-void echo_to_file(const char *path, const char *text, int len);
-int cgroup_verison(const char CGROUP_PATH[50]);
-void init_cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
-                 const char CGROUP_ID[20], int CPU);
-void add_to_cgroup(pid_t pid, const char CGROUP_ID[20]);
-void deinit_cgroup(const char CGROUP_ID[20]);
-
 #define SAFE(func, call)                                                       \
     if ((call) < 0) {                                                          \
         perror(func);                                                          \
