@@ -35,7 +35,7 @@ class Container {
         std::string input;
     };
 
-    enum class exit_status {
+    enum class ExitStatus {
         ok,
         compilation_error,
         wrong_answer,
@@ -48,7 +48,7 @@ class Container {
         idleness_limit_exceeded
     };
 
-    enum class syscall {
+    enum class Syscall {
         kill,
         fork,
         clone,
@@ -71,17 +71,17 @@ class Container {
         ptrace2main[2];
     std::string buf;
 
-    void ptrace_process(launch_options options, std::set<syscall> forbidden_syscalls);
+    void ptrace_process(launch_options options, std::set<Syscall> forbidden_syscalls);
     void create_processes(std::string path_to_binary, std::string args,
-                          launch_options options, std::set<syscall> forbidden_syscalls);
+                          launch_options options, std::set<Syscall> forbidden_syscalls);
     void pipe_init();
     void get_output(const fd_t *fd);
     void write_to_fd(const fd_t *fd, const char *string, size_t size);
 
   public:
     void start(std::string path_to_binary, launch_options options,
-               std::string args, std::set<syscall> forbidden_syscalls);
-    exit_status sync();
+               std::string args, std::set<Syscall> forbidden_syscalls);
+    ExitStatus sync();
     std::string get_buf() const;
 };
 } // namespace ContainerLib
