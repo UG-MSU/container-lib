@@ -32,7 +32,7 @@ void init_cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
     char _cpumax[30];
     char _memorymax[30];
     sprintf(_str_cpu, "%i", rand_cpu);
-    sprintf(_cpumax, "%lli %i", (long long int)(1000000 * TOTAL_CPU_PERCENTAGE),
+    sprintf(_cpumax, "%lli %i", (uint64_t)(1000000 * TOTAL_CPU_PERCENTAGE),
             1000000);
     sprintf(_memorymax, "%lli", MEM_SIZE * 1024);
     switch (_cversion) {
