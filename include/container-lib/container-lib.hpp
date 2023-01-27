@@ -34,7 +34,7 @@ class Container {
         size_t forks_amount;
         size_t forks_threshold;
         std::string input;
-        uint32_t memory;
+        uint64_t memory;
         std::string cgroup_id;
         double cpu_usage;
     };
@@ -72,4 +72,4 @@ class Container {
     std::string get_buf() const;
 };
 } // namespace ContainerLib
-#endif CONTAINER_LIB_HPP
+#endif
