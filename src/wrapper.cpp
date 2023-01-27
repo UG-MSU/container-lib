@@ -14,22 +14,22 @@ PYBIND11_MODULE(container_lib_py, m) {
              "starts containerization process. Launch options struct: int time "
              "- start time, int forks_amount - Amount of sub-processes, int "
              "forks_threshold - Maximum amount of sub-processes");
-    py::enum_<Container::exit_status>(container, "exit_status")
-        .value("ok", Container::exit_status::ok)
-        .value("compilation_error", Container::exit_status::compilation_error)
-        .value("wrong_answer", Container::exit_status::wrong_answer)
-        .value("presentation_error", Container::exit_status::presentation_error)
+    py::enum_<Container::ExitStatus>(container, "ExitStatus")
+        .value("ok", Container::ExitStatus::ok)
+        .value("compilation_error", Container::ExitStatus::compilation_error)
+        .value("wrong_answer", Container::ExitStatus::wrong_answer)
+        .value("presentation_error", Container::ExitStatus::presentation_error)
         .value("time_limit_exceeded",
-               Container::exit_status::time_limit_exceeded)
+               Container::ExitStatus::time_limit_exceeded)
         .value("memory_limit_exceeded",
-               Container::exit_status::memory_limit_exceeded)
+               Container::ExitStatus::memory_limit_exceeded)
         .value("output_limit_exceeded",
-               Container::exit_status::output_limit_exceeded)
-        .value("run_time_error", Container::exit_status::run_time_error)
+               Container::ExitStatus::output_limit_exceeded)
+        .value("run_time_error", Container::ExitStatus::run_time_error)
         .value("precompile_check_failed",
-               Container::exit_status::precompile_check_failed)
+               Container::ExitStatus::precompile_check_failed)
         .value("idleness_limit_exceeded",
-               Container::exit_status::idleness_limit_exceeded)
+               Container::ExitStatus::idleness_limit_exceeded)
         .export_values();
     py::class_<Container::launch_options>(container, "launch_options",
                                           py::dynamic_attr())
