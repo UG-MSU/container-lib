@@ -20,7 +20,7 @@ int cgroup_verison(const char CGROUP_PATH[50]) {
         mount("cgroup2", CGROUP_PATH, "cgroup2", 0, NULL);
     return 2; // not a cgroup fs
 }
-void init_cgroup(uint32_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
+void init_cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
                  const char CGROUP_ID[20], int CPU) {
     // const int cpu_n = get_nprocs();
     // const int rand_cpu = rand() % cpu_n;
@@ -32,7 +32,7 @@ void init_cgroup(uint32_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
     char _cpumax[30];
     char _memorymax[30];
     sprintf(_str_cpu, "%i", rand_cpu);
-    sprintf(_cpumax, "%lli %lli", (long long int)(1000000 * TOTAL_CPU_PERCENTAGE),
+    sprintf(_cpumax, "%lli %i", (long long int)(1000000 * TOTAL_CPU_PERCENTAGE),
             1000000);
     sprintf(_memorymax, "%lli", MEM_SIZE * 1024);
     switch (_cversion) {
