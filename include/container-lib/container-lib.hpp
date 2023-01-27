@@ -13,6 +13,8 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <cstdlib>
+#include <string>
 
 namespace ContainerLib {
 
@@ -33,6 +35,9 @@ class Container {
         size_t forks_amount;
         size_t forks_threshold;
         std::string input;
+        uint64_t memory;
+        std::string cgroup_id;
+        double cpu_usage;
     };
 
     enum class ExitStatus {
@@ -81,8 +86,8 @@ class Container {
   public:
     void start(std::string path_to_binary, launch_options options,
                std::string args, std::set<Syscall> forbidden_syscalls);
-    ExitStatus sync();
+    ExitStatus sync(const char cgroup_id[20]);
     std::string get_buf() const;
 };
 } // namespace ContainerLib
-#endif CONTAINER_LIB_HPP
+#endif
