@@ -31,53 +31,91 @@ void init_cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
     char _str_cpu[3];
     char _cpumax[30];
     char _memorymax[30];
-    sprintf(_str_cpu, "%i", rand_cpu);
-    sprintf(_cpumax, "%lli %i", (uint64_t)(1000000 * TOTAL_CPU_PERCENTAGE),
-            1000000);
-    sprintf(_memorymax, "%lli", MEM_SIZE * 1024);
+    stringstream s;
+    _str_cpu = rand_cpu;
+    s << (uint64_t)(1000000 * TOTAL_CPU_PERCENTAGE)<< '\a' << 1000000;
+    _cpumax = s.str();
+    s.clear();
+    _memorymax = MEM_SIZE*1024;
     switch (_cversion) {
     case 2: { // cgroup v2
-        sprintf(_cgroup, "%s/%s", MAIN_CGROUP_PATH, CGROUP_ID);
+        s << MAIN_CGROUP_PATH << '\a' << CGROUP_ID;
+        _cgroup = s.str();
+        s.clear();
         mkdir(MAIN_CGROUP_PATH, 0777);
         SAFE("mkdir err:", mkdir(_cgroup, 0777));
         chmod(_cgroup, 0777);
         char _subtreepath[100];
         char __subtreepath[100];
-        sprintf(_subtreepath, "%s/cgroup.subtree_control", MAIN_CGROUP_PATH);
-        sprintf(__subtreepath, "%s/cgroup.subtree_control", CGROUP_PATH);
+        s << MAIN_CGROUP_PATH << "/cgroup.subtree_control";
+        _subtreepath = s.str();
+        s.clear();
+        s << CGROUP_PATH << "/cgroup.subtree_control";
+        _subtreepath = s.str();
+        s.clear();
         echo_to_file(__subtreepath, "+cpu +cpuset", 12);
         echo_to_file(_subtreepath, "+cpu +memory +cpuset",
                      20); // enable controllers
-        sprintf(__path, "%s/cpuset.cpus", _cgroup);
+        s << _cgroup << "/cpuset.cpus";
+        __path = s.str();
+        s.clear();
         echo_to_file(__path, _str_cpu, strlen(_str_cpu)); // set random cpu core
-        sprintf(__path, "%s/cpu.max", _cgroup);
+        s << _cgroup << "/cpu.max";
+        __path = s.str();
+        s.clear();
         echo_to_file(__path, _cpumax, strlen(_cpumax)); // set max cpu time
-        sprintf(__path, "%s/memory.swap.max", _cgroup);
+        s << _cgroup << "/memory.swap.max";
+        __path = s.str();
+        s.clear();
         echo_to_file(__path, "0", 1); //  disable memory swap
-        sprintf(__path, "%s/memory.max", _cgroup);
+        s << _cgroup << "/memory.max";
+        __path = s.str();
+        s.clear();
         echo_to_file(__path, _memorymax, strlen(_memorymax)); // set max memory
         break;
     }
     case 1: { // cgroupv1
         sprintf(_cgroup, "%s/cpuset/yats", CGROUP_PATH);
+        s << CGROUP_PATH << "/cpuset/yats";
+        _cgroup = s.str();
+        s.clear();
         mkdir(_cgroup, 0700);
-        sprintf(_cgroup, "%s/cpuset/yats/%s", CGROUP_PATH, CGROUP_ID);
+        s << CGROUP_PATH << "/cpuset/yats/" << CGROUP_ID;
+        _cgroup = s.str();
+        s.clear();
         mkdir(_cgroup, 0700);
-        sprintf(__path, "%s/cpuset.cpus", _cgroup);
+        s << _cgroup << "/cpuset.cpus";
+        __path = s.str();
+        s.clear();
         echo_to_file(__path, _str_cpu, strlen(_str_cpu)); // set random cpu core
-        sprintf(_cgroup, "%s/cpus/yats", CGROUP_PATH);
+        s << CGROUP_PATH << "/cpus/yats";
+        _cgroup = s.str();
+        s.clear();
         mkdir(_cgroup, 0700);
-        sprintf(_cgroup, "%s/cpu/yats/%s", CGROUP_PATH, CGROUP_ID);
+        s << CGROUP_PATH << "/cpu/yats/" << CGROUP_ID;
+        _cgroup = s.str();
+        s.clear();
         mkdir(_cgroup, 0700);
-        sprintf(__path, "%s/cpu.max", _cgroup);
+        s << _cgroup << "/cpu.max";
+        __path = s.str();
+        s.clear();
         echo_to_file(__path, _cpumax, strlen(_cpumax)); // set max cpu time
-        sprintf(_cgroup, "%s/memory/yats", CGROUP_PATH);
+        s << CGROUP_PATH << "/memory/yats";
+        _cgroup = s.str();
+        s.clear();
         mkdir(_cgroup, 0700);
-        sprintf(_cgroup, "%s/memory/yats/%s", CGROUP_PATH, CGROUP_ID);
+        //sprintf(_cgroup, "%s/memory/yats/%s", CGROUP_PATH, CGROUP_ID);
+        s << CGROUP_PATH << "/memory/yats/" << CGROUP_ID;
+        _cgroup = s.str();
+        s.clear();
         mkdir(_cgroup, 0700);
-        sprintf(__path, "%s/memory.swap.max", _cgroup);
+        s << _cgroup << "/memory.swap.max";
+        __path = s.str();
+        s.clear();
         echo_to_file(__path, "0", 1); //  disable memory swap
-        sprintf(__path, "%s/memory.max", _cgroup);
+        s << _cgroup << "/memory.max";
+        __path = s.str();
+        s.clear();
         echo_to_file(__path, _memorymax, strlen(_memorymax)); // set max memory
         break;
     }
@@ -90,20 +128,31 @@ void add_to_cgroup(pid_t pid, const char CGROUP_ID[20]) {
     int _cversion = cgroup_verison(CGROUP_PATH);
     char _spid[20];
     char __path[100];
-    sprintf(_spid, "%i", pid);
+    stringstream s;
+    s << pid;
+    _spid = s.str();
+    s.clear();
     switch (_cversion) {
     case 2: {
-        sprintf(__path, "%s/%s/cgroup.procs", MAIN_CGROUP_PATH, CGROUP_ID);
+        s << MAIN_CGROUP_PATH << "/" << CGROUP_ID << "/cgroup.procs";
+        __path = s.str();
+        s.clear();
         chmod(__path, 0777);
         echo_to_file(__path, _spid, strlen(_spid));
         break;
     }
     case 1: {
-        sprintf(__path, "%s/cpuset/yats/%s/tasks", CGROUP_PATH, CGROUP_ID);
+        s << CGROUP_PATH << "/cpuset/yats/" << CGROUP_ID << "/tasks";
+        __path = s.str();
+        s.clear();
         echo_to_file(__path, _spid, strlen(_spid));
-        sprintf(__path, "%s/cpu/yats/%s/tasks", CGROUP_PATH, CGROUP_ID);
+        s << CGROUP_PATH << "/cpu/yats/" << CGROUP_ID << "/tasks";
+        __path = s.str();
+        s.clear();
         echo_to_file(__path, _spid, strlen(_spid));
-        sprintf(__path, "%s/memory/yats/%s/tasks", CGROUP_PATH, CGROUP_ID);
+        s << CGROUP_PATH << "/memory/yats/" << CGROUP_ID << "/tasks";
+        __path = s.str();
+        s.clear();
         echo_to_file(__path, _spid, strlen(_spid));
         break;
     }
@@ -115,6 +164,8 @@ void add_to_cgroup(pid_t pid, const char CGROUP_ID[20]) {
 
 void deinit_cgroup(const char CGROUP_ID[20]) {
     char __path[100];
-    sprintf(__path, "%s/%s", MAIN_CGROUP_PATH, CGROUP_ID);
+    s << MAIN_CGROUP_PATH << "/" << CGROUP_ID;
+    __path = s.str();
+    s.clear();
     SAFE("deinit err", rmdir(__path));
 }

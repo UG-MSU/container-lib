@@ -14,6 +14,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include <sstream>
 
 void echo_to_file(const char *path, const char *text, int len);
 int cgroup_verison(const char CGROUP_PATH[50]);
