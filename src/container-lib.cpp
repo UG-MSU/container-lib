@@ -18,211 +18,148 @@ void ContainerLib::Container::ptrace_process(launch_options options, std::set<Sy
             ptrace(PTRACE_GETREGS, slave_proc, 0, &state);
             ContainerLib::Container::ExitStatus return_status;
             switch (state.orig_rax) {
-            case __NR_execve:
-                if (forbidden_syscalls.count(Syscall::execve)) {
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    waitpid(slave_proc, nullptr, 0);
-                    return_status = ExitStatus::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-            case __NR_clone:
-                if (forbidden_syscalls.count(Syscall::clone)) {
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    return_status = ExitStatus::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                else {
-                    if (fork() == 0) {
-                        slave_proc = state.rax;
-                        ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
-                        waitpid(slave_proc, &status, 0);
-                        ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
+                case __NR_execve:
+                    if (forbidden_syscalls.count(Syscall::execve)) {
+                        kill_in_syscall(slave_proc, state);
+                        return_status = ExitStatus::run_time_error;
+                        write(pipe_for_exit_status[1], &return_status,
+                              sizeof(exit_status));
+                        return;
                     }
-                }
-                break;
-            case __NR_fork:
-                if (forbidden_syscalls.count(Syscall::fork)) {
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    return_status = ExitStatus::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                else {
-                    if (fork() == 0) {
-                        slave_proc = state.rax;
-                        ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
-                        waitpid(slave_proc, &status, 0);
-                        ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
+                case __NR_clone:
+                    if (forbidden_syscalls.count(Syscall::clone)) {
+                        kill_in_syscall(slave_proc, state);
+                        return_status = ExitStatus::run_time_error;
+                        write(pipe_for_exit_status[1], &return_status,
+                              sizeof(exit_status));
+                        return;
                     }
-                }
-                break;
+                    else {
+                        if (fork() == 0) {
+                            slave_proc = state.rax;
+                            ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
+                            waitpid(slave_proc, &status, 0);
+                            ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
+                        }
+                    }
+                    break;
+                case __NR_fork:
+                    if (forbidden_syscalls.count(Syscall::fork)) {
+                        kill_in_syscall(slave_proc, state);
+                        return_status = ExitStatus::run_time_error;
+                        write(pipe_for_exit_status[1], &return_status,
+                              sizeof(exit_status));
+                        return;
+                    }
+                    else {
+                        if (fork() == 0) {
+                            slave_proc = state.rax;
+                            ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
+                            waitpid(slave_proc, &status, 0);
+                            ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
+                        }
+                    }
+                    break;
 
-            case __NR_kill:
-                if (forbidden_syscalls.count(Syscall::kill)) {
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    return_status = ExitStatus::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_vfork:
-                if (forbidden_syscalls.count(Syscall::vfork)) {
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    return_status = ExitStatus::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_mkdir:
-                if (forbidden_syscalls.count(Syscall::mkdir)) {
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    return_status = ExitStatus::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_rmdir:
-                if (forbidden_syscalls.count(Syscall::rmdir)) {
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    return_status = ExitStatus::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_reboot:
-                if (forbidden_syscalls.count(Syscall::reboot)) {
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    return_status = ExitStatus::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_open:
-                if (forbidden_syscalls.count(Syscall::open)) {
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    waitpid(slave_proc, nullptr, 0);
-                    return_status = ExitStatus::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_openat:
-                if (forbidden_syscalls.count(Syscall::openat)) {
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    waitpid(slave_proc, nullptr, 0);
-                    return_status = ExitStatus::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_sethostname:
-                if (forbidden_syscalls.count(Syscall::sethostname)) {
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    waitpid(slave_proc, nullptr, 0);
-                    return_status = ExitStatus::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_setdomainname:
-                if (forbidden_syscalls.count(Syscall::setdomainname)) {
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    waitpid(slave_proc, nullptr, 0);
-                    return_status = ExitStatus::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_creat:
-                if (forbidden_syscalls.count(Syscall::creat)) {
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    waitpid(slave_proc, nullptr, 0);
-                    return_status = ExitStatus::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
-            case __NR_connect:
-                if (forbidden_syscalls.count(Syscall::connect)) {
-                    state.rax = __NR_kill;
-                    state.rdi = slave_proc;
-                    state.rsi = SIGKILL;
-                    ptrace(PTRACE_SETREGS, slave_proc, 0, &state);
-                    ptrace(PTRACE_CONT, slave_proc, 0, 0);
-                    waitpid(slave_proc, nullptr, 0);
-                    return_status = ExitStatus::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
-                    return;
-                }
-                break;
+                case __NR_kill:
+                    if (forbidden_syscalls.count(Syscall::kill)) {
+                        kill_in_syscall(slave_proc, state);
+                        return_status = ExitStatus::run_time_error;
+                        write(pipe_for_exit_status[1], &return_status,
+                              sizeof(exit_status));
+                        return;
+                    }
+                    break;
+                case __NR_vfork:
+                    if (forbidden_syscalls.count(Syscall::vfork)) {
+                        kill_in_syscall(slave_proc, state);
+                        return_status = ExitStatus::run_time_error;
+                        write(pipe_for_exit_status[1], &return_status,
+                              sizeof(exit_status));
+                        return;
+                    }
+                    break;
+                case __NR_mkdir:
+                    if (forbidden_syscalls.count(Syscall::mkdir)) {
+                        kill_in_syscall(slave_proc, state);
+                        return_status = ExitStatus::run_time_error;
+                        write(pipe_for_exit_status[1], &return_status,
+                              sizeof(exit_status));
+                        return;
+                    }
+                    break;
+                case __NR_rmdir:
+                    if (forbidden_syscalls.count(Syscall::rmdir)) {
+                        kill_in_syscall(slave_proc, state);
+                        return_status = ExitStatus::run_time_error;
+                        write(pipe_for_exit_status[1], &return_status,
+                              sizeof(exit_status));
+                        return;
+                    }
+                    break;
+                case __NR_reboot:
+                    if (forbidden_syscalls.count(Syscall::reboot)) {
+                        kill_in_syscall(slave_proc, state);
+                        return_status = ExitStatus::run_time_error;
+                        write(pipe_for_exit_status[1], &return_status,
+                              sizeof(exit_status));
+                        return;
+                    }
+                    break;
+                case __NR_open:
+                    if (forbidden_syscalls.count(Syscall::open)) {
+                        kill_in_syscall(slave_proc, state);
+                        return_status = ExitStatus::run_time_error;
+                        write(pipe_for_exit_status[1], &return_status,
+                              sizeof(exit_status));
+                        return;
+                    }
+                    break;
+                case __NR_openat:
+                    if (forbidden_syscalls.count(Syscall::openat)) {
+                        kill_in_syscall(slave_proc, state);
+                        return_status = ExitStatus::run_time_error;
+                        write(pipe_for_exit_status[1], &return_status,
+                              sizeof(exit_status));
+                        return;
+                    }
+                    break;
+                case __NR_sethostname:
+                    if (forbidden_syscalls.count(Syscall::sethostname)) {
+                        kill_in_syscall(slave_proc, state);
+                        return_status = ExitStatus::run_time_error;
+                        write(pipe_for_exit_status[1], &return_status,
+                              sizeof(exit_status));
+                        return;
+                    }
+                    break;
+                case __NR_setdomainname:
+                    if (forbidden_syscalls.count(Syscall::setdomainname)) {
+                        kill_in_syscall(slave_proc, state);
+                        return_status = ExitStatus::run_time_error;
+                        write(pipe_for_exit_status[1], &return_status,
+                              sizeof(exit_status));
+                        return;
+                    }
+                    break;
+                case __NR_creat:
+                    if (forbidden_syscalls.count(Syscall::creat)) {
+                        kill_in_syscall(slave_proc, state);
+                        return_status = ExitStatus::run_time_error;
+                        write(pipe_for_exit_status[1], &return_status,
+                              sizeof(exit_status));
+                        return;
+                    }
+                    break;
+                case __NR_connect:
+                    if (forbidden_syscalls.count(Syscall::connect)) {
+                        kill_in_syscall(slave_proc, state);
+                        return_status = ExitStatus::run_time_error;
+                        write(pipe_for_exit_status[1], &return_status,
+                              sizeof(exit_status));
+                        return;
+                    }
+                    break;
             }
 
             // skip after Syscall
@@ -261,8 +198,8 @@ ContainerLib::Container::ExitStatus ContainerLib::Container::sync() {
 }
 
 void ContainerLib::Container::create_processes(
-    std::string path_to_binary, std::string args,
-    ContainerLib::Container::launch_options options, std::set<Syscall> forbidden_syscalls) {
+        std::string path_to_binary, std::string args,
+        ContainerLib::Container::launch_options options, std::set<Syscall> forbidden_syscalls) {
     slave_proc = fork();
     if (slave_proc != 0) {
         ptrace_process(options, forbidden_syscalls);
@@ -308,4 +245,13 @@ void ContainerLib::Container::write_to_fd(const fd_t *fd, const char *string,
     int write_status = write(fd[1], tmp, size);
     delete[] tmp;
     return;
+}
+void ContainerLib::Container::kill_in_syscall(pid_t pid,
+                                              user_regs_struct &state) {
+    state.orig_rax = __NR_kill;
+    state.rdi = pid;
+    state.rsi = SIGKILL;
+    ptrace(PTRACE_SETREGS, pid, 0, &state);
+    ptrace(PTRACE_CONT, pid, 0, 0);
+    waitpid(pid, NULL, 0);
 }
