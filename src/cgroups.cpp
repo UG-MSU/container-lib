@@ -1,4 +1,4 @@
-#include "container-lib/cgroups.h"
+#include "container-lib/cgroups.hpp"
 
 void echo_to_file(const char *path, const char *text, int len) {
     int fd;
