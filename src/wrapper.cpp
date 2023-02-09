@@ -1,4 +1,5 @@
 #include "../extern/pybind11/include/pybind11/pybind11.h"
+#include "../extern/pybind11/include/pybind11/stl.h"
 #include "container-lib/container-lib.hpp"
 namespace py = pybind11;
 using namespace std;
@@ -32,6 +33,22 @@ PYBIND11_MODULE(container_lib_py, m) {
                Container::ExitStatus::precompile_check_failed)
         .value("idleness_limit_exceeded",
                Container::ExitStatus::idleness_limit_exceeded)
+        .export_values();
+    py::enum_<Container::Syscall>(container, "Syscall")
+        .value("kill", Container::Syscall::kill)
+        .value("fork", Container::Syscall::fork)
+        .value("clone", Container::Syscall::clone)
+        .value("vfork", Container::Syscall::vfork)
+        .value("execve", Container::Syscall::execve)
+        .value("mkdir", Container::Syscall::mkdir)
+        .value("rmdir", Container::Syscall::rmdir)
+        .value("reboot", Container::Syscall::reboot)
+        .value("open", Container::Syscall::open)
+        .value("openat", Container::Syscall::openat)
+        .value("sethostname", Container::Syscall::sethostname)
+        .value("setdomainname", Container::Syscall::setdomainname)
+        .value("creat", Container::Syscall::creat)
+        .value("connect", Container::Syscall::connect)
         .export_values();
     py::class_<Container::launch_options>(container, "launch_options",
                                           py::dynamic_attr())
