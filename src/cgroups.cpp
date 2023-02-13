@@ -1,9 +1,11 @@
 #include "container-lib/cgroups.hpp"
 
-void echo_to_file(const char *path, const char *text, int len) {
+void echo_to_file(std::string path, std::string text, int len) {
     int fd;
-    SAFE("file open error", fd = open(path, O_WRONLY));
-    if(len != write(fd, text, len)) {
+    const char * _path;
+    _path = path.c_str();
+    SAFE("file open error", fd = open(_path, O_WRONLY));
+    if(len != write(fd, text.c_str(), len)) {
         perror("write error");
     } 
     SAFE("file close error", close(fd));
@@ -26,97 +28,100 @@ void init_cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
     // const int rand_cpu = rand() % cpu_n;
     const int rand_cpu = CPU;
     int _cversion = cgroup_verison(CGROUP_PATH);
-    char _cgroup[100];
-    char __path[100];
-    char _str_cpu[3];
-    char _cpumax[30];
-    char _memorymax[30];
-    stringstream s;
+    std::string _cgroup;
+    std::string __path;
+    std::string _str_cpu;
+    std::string _cpumax;
+    std::string _memorymax;
+    std::stringstream s;
     _str_cpu = rand_cpu;
-    s << (uint64_t)(1000000 * TOTAL_CPU_PERCENTAGE)<< '\a' << 1000000;
-    _cpumax = s.str();
-    s.clear();
+    s << (uint64_t)(1000000 * TOTAL_CPU_PERCENTAGE)<< ' '<<  1000000;
+    _cpumax = s.str().c_str();
+    s.str("");
     _memorymax = MEM_SIZE*1024;
     switch (_cversion) {
     case 2: { // cgroup v2
-        s << MAIN_CGROUP_PATH << '\a' << CGROUP_ID;
-        _cgroup = s.str();
-        s.clear();
+        s << MAIN_CGROUP_PATH << '/' << CGROUP_ID;
+        _cgroup = s.str().c_str();
+        s.str("");
         mkdir(MAIN_CGROUP_PATH, 0777);
-        SAFE("mkdir err:", mkdir(_cgroup, 0777));
-        chmod(_cgroup, 0777);
-        char _subtreepath[100];
-        char __subtreepath[100];
+        std::cerr << _cgroup.c_str() << std::endl;
+        SAFE("mkdir err:", mkdir(_cgroup.c_str(), 0777));
+        chmod(_cgroup.c_str(), 0777);
+        std::string _subtreepath;
+        std::string __subtreepath;
         s << MAIN_CGROUP_PATH << "/cgroup.subtree_control";
         _subtreepath = s.str();
-        s.clear();
+        s.str("");
         s << CGROUP_PATH << "/cgroup.subtree_control";
-        _subtreepath = s.str();
-        s.clear();
+        __subtreepath = s.str();
+        s.str("");
         echo_to_file(__subtreepath, "+cpu +cpuset", 12);
         echo_to_file(_subtreepath, "+cpu +memory +cpuset",
                      20); // enable controllers
         s << _cgroup << "/cpuset.cpus";
         __path = s.str();
-        s.clear();
-        echo_to_file(__path, _str_cpu, strlen(_str_cpu)); // set random cpu core
+        s.str("");
+        echo_to_file(__path, _str_cpu, _str_cpu.size()); // set random cpu core
         s << _cgroup << "/cpu.max";
         __path = s.str();
-        s.clear();
-        echo_to_file(__path, _cpumax, strlen(_cpumax)); // set max cpu time
+        s.str("");
+        echo_to_file(__path, _cpumax, _cpumax.size()); // set max cpu time
         s << _cgroup << "/memory.swap.max";
         __path = s.str();
-        s.clear();
+        s.str("");
         echo_to_file(__path, "0", 1); //  disable memory swap
         s << _cgroup << "/memory.max";
         __path = s.str();
-        s.clear();
-        echo_to_file(__path, _memorymax, strlen(_memorymax)); // set max memory
+        s.str("");
+        echo_to_file(__path, _memorymax, _memorymax.size()); // set max memory
         break;
     }
     case 1: { // cgroupv1
-        sprintf(_cgroup, "%s/cpuset/yats", CGROUP_PATH);
+        s<< CGROUP_PATH << "/cpuset/yats";
+        _cgroup = s.str();
+        s.str("");
         s << CGROUP_PATH << "/cpuset/yats";
         _cgroup = s.str();
-        s.clear();
-        mkdir(_cgroup, 0700);
+        s.str("");
+        mkdir(_cgroup.c_str(), 0700);
         s << CGROUP_PATH << "/cpuset/yats/" << CGROUP_ID;
         _cgroup = s.str();
-        s.clear();
-        mkdir(_cgroup, 0700);
+        s.str("");
+        mkdir(_cgroup.c_str(), 0700);
         s << _cgroup << "/cpuset.cpus";
         __path = s.str();
-        s.clear();
-        echo_to_file(__path, _str_cpu, strlen(_str_cpu)); // set random cpu core
+        s.str("");
+        echo_to_file(__path, _str_cpu, _str_cpu.size()); // set random cpu core
         s << CGROUP_PATH << "/cpus/yats";
         _cgroup = s.str();
-        s.clear();
-        mkdir(_cgroup, 0700);
+        s.str("");
+        mkdir(_cgroup.c_str(), 0700);
         s << CGROUP_PATH << "/cpu/yats/" << CGROUP_ID;
         _cgroup = s.str();
-        s.clear();
-        mkdir(_cgroup, 0700);
+        s.str("");
+        mkdir(_cgroup.c_str(), 0700);
         s << _cgroup << "/cpu.max";
         __path = s.str();
-        s.clear();
-        echo_to_file(__path, _cpumax, strlen(_cpumax)); // set max cpu time
+        s.str("");
+        echo_to_file(__path, _cpumax, _cpumax.size()); // set max cpu time
         s << CGROUP_PATH << "/memory/yats";
         _cgroup = s.str();
-        s.clear();
-        mkdir(_cgroup, 0700);
+        s.str("");
+        mkdir(_cgroup.c_str(), 0700);
         //sprintf(_cgroup, "%s/memory/yats/%s", CGROUP_PATH, CGROUP_ID);
         s << CGROUP_PATH << "/memory/yats/" << CGROUP_ID;
         _cgroup = s.str();
-        s.clear();
-        mkdir(_cgroup, 0700);
+        s.str("");
+        mkdir(_cgroup.c_str(), 0700);
         s << _cgroup << "/memory.swap.max";
         __path = s.str();
-        s.clear();
+        s.str("");
         echo_to_file(__path, "0", 1); //  disable memory swap
         s << _cgroup << "/memory.max";
         __path = s.str();
-        s.clear();
-        echo_to_file(__path, _memorymax, strlen(_memorymax)); // set max memory
+        s.str("");
+        echo_to_file(__path, _memorymax, _memorymax.size()); // set max memory
         break;
     }
     case 0: // no cgroup mounted (error)
@@ -126,34 +131,35 @@ void init_cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
 }
 void add_to_cgroup(pid_t pid, const char CGROUP_ID[20]) {
     int _cversion = cgroup_verison(CGROUP_PATH);
-    char _spid[20];
-    char __path[100];
-    stringstream s;
+    std::string _spid;
+    std::string __path;
+    std::stringstream s;
     s << pid;
     _spid = s.str();
-    s.clear();
+    s.str("");
     switch (_cversion) {
     case 2: {
+        std::cerr << "ya pokakakl"<< std::endl;
         s << MAIN_CGROUP_PATH << "/" << CGROUP_ID << "/cgroup.procs";
         __path = s.str();
-        s.clear();
-        chmod(__path, 0777);
-        echo_to_file(__path, _spid, strlen(_spid));
+        s.str("");
+        chmod(__path.c_str(), 0777);
+        echo_to_file(__path, _spid, _spid.size());
         break;
     }
     case 1: {
         s << CGROUP_PATH << "/cpuset/yats/" << CGROUP_ID << "/tasks";
         __path = s.str();
-        s.clear();
-        echo_to_file(__path, _spid, strlen(_spid));
+        s.str("");
+        echo_to_file(__path, _spid, _spid.size());
         s << CGROUP_PATH << "/cpu/yats/" << CGROUP_ID << "/tasks";
         __path = s.str();
-        s.clear();
-        echo_to_file(__path, _spid, strlen(_spid));
+        s.str("");
+        echo_to_file(__path, _spid, _spid.size());
         s << CGROUP_PATH << "/memory/yats/" << CGROUP_ID << "/tasks";
         __path = s.str();
-        s.clear();
-        echo_to_file(__path, _spid, strlen(_spid));
+        s.str("");
+        echo_to_file(__path, _spid, _spid.size());
         break;
     }
     case 0: // no cgroup mounted (error)
@@ -163,9 +169,10 @@ void add_to_cgroup(pid_t pid, const char CGROUP_ID[20]) {
 }
 
 void deinit_cgroup(const char CGROUP_ID[20]) {
-    char __path[100];
+    std::string __path;
+    std::stringstream s;
     s << MAIN_CGROUP_PATH << "/" << CGROUP_ID;
     __path = s.str();
-    s.clear();
-    SAFE("deinit err", rmdir(__path));
+    s.str("");
+    SAFE("deinit err", rmdir(__path.c_str()));
 }

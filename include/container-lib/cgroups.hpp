@@ -14,6 +14,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include <iostream>
 #include <sstream>
 
 void echo_to_file(const char *path, const char *text, int len);
