@@ -3,6 +3,3 @@
 	url = ../../pybind/pybind11
 	branch = stable
 
-[submodule "extern/DockerClient"]
-	path = extern/DockerClient
-	url = git@github.com:cqbqdd11519/DockerClient.git
