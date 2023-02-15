@@ -244,12 +244,7 @@ void ContainerLib::Container::start(std::string path_to_binary, launch_options o
     std::default_random_engine e(r());
     std::uniform_int_distribution<int> uniform_dist(0, 16);
     int coreCPU = uniform_dist(e);
-    init_cgroup(options.memory, options.cpu_usage, options.cgroup_id.c_str(), coreCPU); 
-    std::random_device r;
-    std::default_random_engine e(r());
-    std::uniform_int_distribution<int> uniform_dist(0, 16);
-    int coreCPU = uniform_dist(e);
-    init_cgroup(options.memory, options.cpu_usage, options.cgroup_id.c_str(), coreCPU); 
+    init_cgroup(options.memory, options.cpu_usage, options.cgroup_id.c_str(), coreCPU);
     pipe_init();
     ptrace_proc = fork();
     if (ptrace_proc != 0) {
