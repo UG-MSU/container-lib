@@ -1,4 +1,6 @@
 #include "container-lib/container-lib.hpp"
+#include "container-lib/cgroups.hpp"
+#include <random>
 
 void ContainerLib::Container::ptrace_process(
     launch_options options, std::set<Syscall> forbidden_syscalls) {
@@ -144,6 +146,11 @@ void ContainerLib::Container::ptrace_process(
 void ContainerLib::Container::start(std::string path_to_binary,
                                     launch_options options, std::string args,
                                     std::set<Syscall> forbidden_syscalls) {
+    std::random_device r;
+    std::default_random_engine e(r());
+    std::uniform_int_distribution<int> uniform_dist(0, 16);
+    int coreCPU = uniform_dist(e);
+    init_cgroup(options.memory, options.cpu_usage, options.cgroup_id.c_str(), coreCPU); 
     pipe_init();
     ptrace_proc = fork();
     if (ptrace_proc != 0) {
@@ -156,13 +163,14 @@ void ContainerLib::Container::start(std::string path_to_binary,
     }
 }
 
-ContainerLib::Container::ExitStatus ContainerLib::Container::sync() {
+ContainerLib::Container::ExitStatus ContainerLib::Container::sync(const char cgroup_id[20]) {
     int ptrace_status;
     waitpid(ptrace_proc, &ptrace_status, 0);
     ExitStatus status;
     if (WIFEXITED(ptrace_status)) {
         read(pipe_for_exit_status[0], &status, sizeof(ExitStatus));
         get_output(ptrace2main);
+        deinit_cgroup(cgroup_id);
         return status;
     }
 }
@@ -179,6 +187,7 @@ void ContainerLib::Container::create_processes(
         write_to_fd(ptrace2exec, options.input.c_str(), options.input.size());
         dup2(ptrace2exec[0], STDIN_FILENO);
         dup2(exec2ptrace[1], STDOUT_FILENO);
+        add_to_cgroup(getpid(), options.cgroup_id.c_str());
         execl(path_to_binary.data(), args.data(), nullptr);
         perror("execl");
     }
