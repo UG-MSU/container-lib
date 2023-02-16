@@ -1,11 +1,12 @@
 #ifndef CONTAINER_LIB_HPP
 #define CONTAINER_LIB_HPP
 #include <asm/unistd.h>
+#include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
 #include <iostream>
-#include <sstream>
 #include <set>
+#include <sstream>
 #include <stdlib.h>
 #include <string>
 #include <sys/ptrace.h>
@@ -13,8 +14,6 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <cstdlib>
-#include <string>
 
 namespace ContainerLib {
 
@@ -76,12 +75,15 @@ class Container {
         ptrace2main[2];
     std::string buf;
 
-    void ptrace_process(launch_options options, std::set<Syscall> forbidden_syscalls);
+    void ptrace_process(launch_options options,
+                        std::set<Syscall> forbidden_syscalls);
     void create_processes(std::string path_to_binary, std::string args,
-                          launch_options options, std::set<Syscall> forbidden_syscalls);
+                          launch_options options,
+                          std::set<Syscall> forbidden_syscalls);
     void pipe_init();
     void get_output(const fd_t *fd);
     void write_to_fd(const fd_t *fd, const char *string, size_t size);
+    void kill_in_syscall(pid_t pid, user_regs_struct &state);
 
   public:
     void start(std::string path_to_binary, launch_options options,
