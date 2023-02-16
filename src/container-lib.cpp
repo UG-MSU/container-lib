@@ -16,7 +16,6 @@ void ContainerLib::Container::ptrace_process(launch_options options, std::set<Sy
         // at Syscall
         if (WIFSTOPPED(status) && WSTOPSIG(status) & 0x80) {
             ptrace(PTRACE_GETREGS, slave_proc, 0, &state);
-            ContainerLib::Container::ExitStatus return_status;
             switch (state.orig_rax) {
                 case __NR_execve:
                     if (forbidden_syscalls.count(Syscall::execve)) {
@@ -220,6 +219,6 @@ void ContainerLib::Container::kill_in_syscall(pid_t pid,
     ptrace(PTRACE_SETREGS, pid, 0, &state);
     ptrace(PTRACE_CONT, pid, 0, 0);
     waitpid(pid, NULL, 0);
-    return_status = ExitStatus::run_time_error;
-    write(pipe_for_exit_status[1], &return_status, sizeof(exit_status));
+    ExitStatus return_status = ExitStatus::run_time_error;
+    write(pipe_for_exit_status[1], &return_status, sizeof(return_status));
 }

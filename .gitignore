@@ -41,3 +41,5 @@ src/build.sh
 
 
 /test
+
+cmake-build-debug
