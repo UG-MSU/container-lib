@@ -141,7 +141,8 @@ void ContainerLib::Container::start(std::string path_to_binary,
     std::default_random_engine e(r());
     std::uniform_int_distribution<int> uniform_dist(0, 16);
     int coreCPU = uniform_dist(e);
-    init_cgroup(options.memory, options.cpu_usage, options.cgroup_id.c_str(), coreCPU); 
+    init_cgroup(options.memory, options.cpu_usage, options.cgroup_id.c_str(),
+                coreCPU);
     pipe_init();
     ptrace_proc = fork();
     if (ptrace_proc != 0) {
@@ -154,7 +155,8 @@ void ContainerLib::Container::start(std::string path_to_binary,
     }
 }
 
-ContainerLib::Container::ExitStatus ContainerLib::Container::sync(const char cgroup_id[20]) {
+ContainerLib::Container::ExitStatus
+ContainerLib::Container::sync(const char cgroup_id[20]) {
     int ptrace_status;
     waitpid(ptrace_proc, &ptrace_status, 0);
     ExitStatus status;
