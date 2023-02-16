@@ -23,17 +23,11 @@ void ContainerLib::Container::ptrace_process(
             case __NR_execve:
                 if (forbidden_syscalls.count(Syscall::execve)) {
                     kill_in_syscall(slave_proc, state);
-                    return_status = ExitStatus::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
                     return;
                 }
             case __NR_clone:
                 if (forbidden_syscalls.count(Syscall::clone)) {
                     kill_in_syscall(slave_proc, state);
-                    return_status = ExitStatus::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
                     return;
                 } else {
                     if (fork() == 0) {
@@ -48,9 +42,6 @@ void ContainerLib::Container::ptrace_process(
             case __NR_fork:
                 if (forbidden_syscalls.count(Syscall::fork)) {
                     kill_in_syscall(slave_proc, state);
-                    return_status = ExitStatus::run_time_error;
-                    write(pipe_for_exit_status[1], &return_status,
-                          sizeof(exit_status));
                     return;
                 } else {
                     if (fork() == 0) {
@@ -84,6 +75,7 @@ void ContainerLib::Container::ptrace_process(
             case __NR_rmdir:
                 if (forbidden_syscalls.count(Syscall::rmdir)) {
                     kill_in_syscall(slave_proc, state);
+                    return;
                 }
                 break;
             case __NR_reboot:
