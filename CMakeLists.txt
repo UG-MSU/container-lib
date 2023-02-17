@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.22)
 project(container-lib)
 set(CMAKE_CXX_STANDARD 17)
 
-include_directories(include extern/DockerClient/include/)
+include_directories(include extern/DockerClient/include/ extern/DockerClient/rapidjson/include/)
 
 add_library(container-lib src/container-lib.cpp src/cgroups.cpp)
 add_executable(test_exec main.cpp)
