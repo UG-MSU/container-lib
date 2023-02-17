@@ -9,6 +9,9 @@ add_library(container-lib src/container-lib.cpp src/cgroups.cpp)
 add_executable(test_exec main.cpp)
 target_link_libraries(test_exec container-lib)
 
+find_package(CURL REQUIRED)
+include_directories(${CURL_INCLUDE_DIR})
+
 add_subdirectory(extern/DockerClient)
 add_library(docker-lib src/docker-lib.cpp)
 add_executable(docker_exec docker_test.cpp)
