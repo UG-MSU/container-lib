@@ -14,8 +14,8 @@ PYBIND11_MODULE(container_lib_py, m) {
              "starts containerization process. Launch options struct: int time "
              "- start time, int forks_amount - Amount of sub-processes, int "
              "forks_threshold - Maximum amount of sub-processes")
-         .def("get_buf", &Container::get_buf, "get buf");
-        
+        .def("get_buf", &Container::get_buf, "get buf");
+
     py::enum_<Container::ExitStatus>(container, "ExitStatus")
         .value("ok", Container::ExitStatus::ok)
         .value("compilation_error", Container::ExitStatus::compilation_error)
@@ -44,5 +44,4 @@ PYBIND11_MODULE(container_lib_py, m) {
         .def_readwrite("memory", &Container::launch_options::memory)
         .def_readwrite("cgroup_id", &Container::launch_options::cgroup_id)
         .def_readwrite("input", &Container::launch_options::input);
-
 }

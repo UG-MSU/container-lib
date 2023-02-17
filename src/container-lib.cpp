@@ -2,7 +2,8 @@
 #include "container-lib/cgroups.hpp"
 #include <random>
 
-void ContainerLib::Container::ptrace_process(launch_options options, std::set<Syscall> forbidden_syscalls) {
+void ContainerLib::Container::ptrace_process(
+    launch_options options, std::set<Syscall> forbidden_syscalls) {
     int status, exit_status;
     waitpid(slave_proc, &status, 0);
 
@@ -44,13 +45,13 @@ void ContainerLib::Container::ptrace_process(launch_options options, std::set<Sy
                     write(pipe_for_exit_status[1], &return_status,
                           sizeof(exit_status));
                     return;
-                }
-                else {
+                } else {
                     if (fork() == 0) {
                         slave_proc = state.rax;
                         ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
                         waitpid(slave_proc, &status, 0);
-                        ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
+                        ptrace(PTRACE_SETOPTIONS, slave_proc, 0,
+                               PTRACE_O_TRACESYSGOOD);
                     }
                 }
                 break;
@@ -65,13 +66,13 @@ void ContainerLib::Container::ptrace_process(launch_options options, std::set<Sy
                     write(pipe_for_exit_status[1], &return_status,
                           sizeof(exit_status));
                     return;
-                }
-                else {
+                } else {
                     if (fork() == 0) {
                         slave_proc = state.rax;
                         ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
                         waitpid(slave_proc, &status, 0);
-                        ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
+                        ptrace(PTRACE_SETOPTIONS, slave_proc, 0,
+                               PTRACE_O_TRACESYSGOOD);
                     }
                 }
                 break;
@@ -239,12 +240,15 @@ void ContainerLib::Container::ptrace_process(launch_options options, std::set<Sy
     exit(exit_status);
 }
 
-void ContainerLib::Container::start(std::string path_to_binary, launch_options options, std::string args, std::set<Syscall> forbidden_syscalls) {
+void ContainerLib::Container::start(std::string path_to_binary,
+                                    launch_options options, std::string args,
+                                    std::set<Syscall> forbidden_syscalls) {
     std::random_device r;
     std::default_random_engine e(r());
     std::uniform_int_distribution<int> uniform_dist(0, 16);
     int coreCPU = uniform_dist(e);
-    init_cgroup(options.memory, options.cpu_usage, options.cgroup_id.c_str(), coreCPU); 
+    init_cgroup(options.memory, options.cpu_usage, options.cgroup_id.c_str(),
+                coreCPU);
     pipe_init();
     ptrace_proc = fork();
     if (ptrace_proc != 0) {
@@ -252,11 +256,13 @@ void ContainerLib::Container::start(std::string path_to_binary, launch_options o
         return;
     } else {
         close(pipe_for_exit_status[0]);
-        create_processes(std::move(path_to_binary), std::move(args), options, forbidden_syscalls);
+        create_processes(std::move(path_to_binary), std::move(args), options,
+                         forbidden_syscalls);
     }
 }
 
-ContainerLib::Container::ExitStatus ContainerLib::Container::sync(const char cgroup_id[20]) {
+ContainerLib::Container::ExitStatus
+ContainerLib::Container::sync(const char cgroup_id[20]) {
     int ptrace_status;
     waitpid(ptrace_proc, &ptrace_status, 0);
     ExitStatus status;
@@ -270,7 +276,8 @@ ContainerLib::Container::ExitStatus ContainerLib::Container::sync(const char cgr
 
 void ContainerLib::Container::create_processes(
     std::string path_to_binary, std::string args,
-    ContainerLib::Container::launch_options options, std::set<Syscall> forbidden_syscalls) {
+    ContainerLib::Container::launch_options options,
+    std::set<Syscall> forbidden_syscalls) {
     slave_proc = fork();
     if (slave_proc != 0) {
         ptrace_process(options, forbidden_syscalls);
