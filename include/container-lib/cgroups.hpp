@@ -16,14 +16,16 @@
 #include <unistd.h>
 #include <iostream>
 #include <sstream>
+#include <fstream>
 
-void echo_to_file(const char *path, const char *text, int len);
+void echo_to_file(std::string path, std::string text);
 int cgroup_verison(const char CGROUP_PATH[50]);
 void init_cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
                  const char CGROUP_ID[20], int CPU);
 void add_to_cgroup(pid_t pid, const char CGROUP_ID[20]);
 void deinit_cgroup(const char CGROUP_ID[20]);
-
+#define FILE_EXISTS(file) access(file, F_OK) == 0
+    
 #define SAFE(func, call)                                                       \
     if ((call) < 0) {                                                          \
         perror(func);                                                          \
@@ -35,10 +37,4 @@ const int64_t CGROUPV1_MAGIC = 2613483;
 const char CGROUP_PATH[20] = "/sys/fs/cgroup";
 const char MAIN_CGROUP_PATH[20] = "/sys/fs/cgroup/yats";
 
-void echo_to_file(const char *path, const char *text, int len);
-int cgroup_verison(const char CGROUP_PATH[50]);
-void init_cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
-                 const char CGROUP_ID[20], int CPU);
-void add_to_cgroup(pid_t pid, const char CGROUP_ID[20]);
-void deinit_cgroup(const char CGROUP_ID[20]);
 #endif
