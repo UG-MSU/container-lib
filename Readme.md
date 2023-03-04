@@ -20,3 +20,40 @@ system that smells *bebra* and gives rating for it
 - CTF
 - just use docker
 - github linkage
+
+## Example of code
+```
+# importing our library
+import container_lib_py
+
+# construct neccesary objects
+cont = container_lib_py.Container()
+opt = container_lib_py.launch_options()
+
+# max time of executing program
+opt.time = 1000
+
+# max amount of processes executing program
+opt.forks_threshold = 8
+
+# percentage of processor load
+opt.cpu_usage = 30
+
+# max usage of memory KB
+opt.memory = 32
+
+opt.cgroup_id = "QWERTY
+
+# input for controlled process
+opt.input = "example of input"
+
+# start binary file with way "./test", options opt and empty arguments
+cont.start("./test", opt, "")
+# YOU MUSTN'T CALL MORE THEN 1 METHOD START FOR COTAINER OBJECT!!!
+
+# wait for end of the program and print its exit status
+print(cont.sync())
+
+# print output of the program
+print(cont.get_buf())
+```
