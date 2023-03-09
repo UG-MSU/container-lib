@@ -1,28 +1,29 @@
 #include "container-lib/cgroups.hpp"
 
-// void echo_to_file(std::string path, std::string text) {
-//     std::ofstream fs;
-//     std::ofstream test;
-//     std::cerr <<text << std::endl; 
-//     test.open("test.txt");
-//     test << text << "\n";
-//     fs.open(path);
-//     fs << text;
-//     fs.close();
-// }
 void echo_to_file(std::string path, std::string text) {
-    int fd;
-    const char * _path;
-    _path = path.c_str();
-    int len = text.size();
-    // std::cerr << len << '\n';
-    // std::cerr << text << '\n';
-    SAFE("file open error", fd = open(_path, O_WRONLY));
-    if(len != write(fd, text.c_str(), len)) {
-        perror("write error");
-    } 
-    SAFE("file close error", close(fd));
+    std::ofstream fs;
+    std::cerr << text << std::endl;
+    SAFE_FS(fs, path);
+    if(fs.is_open()) std::cout << "open\n";
+    else std::cout << "not open\n";
+    std::cout << std::boolalpha << fs.is_open() << std::endl;
+    fs << text;
+    std::cerr << "writed to path: " << text << " path: " << path << "\n";
+    fs.close();
 }
+// void echo_to_file(std::string path, std::string text) {
+//     int fd;
+//     const char * _path;
+//     _path = path.c_str();
+//     int len = text.size();
+//     // std::cerr << len << '\n';
+//     // std::cerr << text << '\n';
+//     SAFE("file open error", fd = open(_path, O_WRONLY));
+//     if(len != write(fd, text.c_str(), len)) {
+//         perror("write error");
+//     }
+//     SAFE("file close error", close(fd));
+// }
 int cgroup_verison(const char CGROUP_PATH[50]) {
     struct statfs _buf;
     SAFE("statfs error", statfs(CGROUP_PATH, &_buf));
@@ -47,25 +48,27 @@ void init_cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
     std::string _memorymax;
     std::stringstream s;
     _str_cpu = rand_cpu;
-    s << (uint64_t)(1000000 * TOTAL_CPU_PERCENTAGE)<< ' '<<  1000000;
+    s << (uint64_t)(1000000 * TOTAL_CPU_PERCENTAGE) << ' ' << 1000000;
     _cpumax = s.str().c_str();
     s.str("");
-    _memorymax = MEM_SIZE*1024;
+    _memorymax = MEM_SIZE * 1024;
     switch (_cversion) {
     case 2: { // cgroup v2
+        if (!FILE_EXISTS(MAIN_CGROUP_PATH))
+            SAFE("mkdir err:", mkdir(MAIN_CGROUP_PATH, 0777));
         s << MAIN_CGROUP_PATH << '/' << CGROUP_ID;
         _cgroup = s.str().c_str();
         std::cerr << s.str() << '\n';
         echo_to_file("test.txt", s.str());
         s.str("");
-        if (!FILE_EXISTS(MAIN_CGROUP_PATH)) SAFE("mkdir err:", mkdir(MAIN_CGROUP_PATH, 0777));
-        //std::cerr << _cgroup.c_str() << std::endl;
-        if (!FILE_EXISTS(_cgroup.c_str())){ 
+        // std::cerr << _cgroup.c_str() << std::endl;
+        if (!FILE_EXISTS(_cgroup.c_str())) {
             SAFE("mkdir err:", mkdir(_cgroup.c_str(), 0777));
-        }
-        else {
+            std::cerr << "cgroup not exists\n";
+        } else {
             SAFE("rmdir err:", rmdir(_cgroup.c_str()));
             SAFE("mkdir err:", mkdir(_cgroup.c_str(), 0777));
+            std::cerr << "cgroup exists\n";
         }
         // SAFE("mkdir err:", mkdir(_cgroup.c_str(), 0777));
         chmod(_cgroup.c_str(), 0777);
@@ -90,7 +93,7 @@ void init_cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
         break;
     }
     case 1: { // cgroupv1
-        s<< CGROUP_PATH << "/cpuset/yats";
+        s << CGROUP_PATH << "/cpuset/yats";
         mkdir(s.str().c_str(), 0700);
         s.str("");
         s << CGROUP_PATH << "/cpuset/yats/" << CGROUP_ID;
@@ -145,7 +148,7 @@ void add_to_cgroup(pid_t pid, const char CGROUP_ID[20]) {
     }
     case 1: {
         s << CGROUP_PATH << "/cpuset/yats/" << CGROUP_ID << "/tasks";
-         echo_to_file(s.str(), _spid);
+        echo_to_file(s.str(), _spid);
         s.str("");
         s << CGROUP_PATH << "/cpu/yats/" << CGROUP_ID << "/tasks";
         echo_to_file(s.str(), _spid);
