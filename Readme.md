@@ -23,14 +23,13 @@ system that smells *bebra* and gives rating for it
 
 ## Example of code
 ```
-# importing our library
 import container_lib_py
 
 # construct neccesary objects
 cont = container_lib_py.Container()
 opt = container_lib_py.launch_options()
 
-# max time of executing program
+# max time for executing program
 opt.time = 1000
 
 # max amount of processes executing program
@@ -39,21 +38,21 @@ opt.forks_threshold = 8
 # percentage of processor load
 opt.cpu_usage = 30
 
-# max usage of memory KB
+# max usage of memory in kilobytes
 opt.memory = 32
 
-opt.cgroup_id = "QWERTY
+opt.cgroup_id = "QWERTY"
 
 # input for controlled process
 opt.input = "example of input"
 
 # start binary file with way "./test", options opt and empty arguments
 cont.start("./test", opt, "")
-# YOU MUSTN'T CALL MORE THEN 1 METHOD START FOR COTAINER OBJECT!!!
+# YOU MUSTN'T CALL MORE THAN 1 METHOD START FOR COTAINER OBJECT!!!
 
-# wait for end of the program and print its exit status
+# wait for end of the program and print exit status
 print(cont.sync())
 
-# print output of the program
+# print output bufer of the program
 print(cont.get_buf())
 ```

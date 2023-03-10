@@ -14,7 +14,7 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <unistd.h>
-
+#include <random>
 namespace ContainerLib {
 
 #define SAFE(func, call)                                                       \
@@ -88,7 +88,7 @@ class Container {
   public:
     void start(std::string path_to_binary, launch_options options,
                std::string args, std::set<Syscall> forbidden_syscalls);
-    ExitStatus sync(const char cgroup_id[20]);
+    ExitStatus sync(std::string cgroup_id);
     std::string get_buf() const;
 };
 } // namespace ContainerLib
