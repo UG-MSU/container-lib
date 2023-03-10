@@ -96,12 +96,5 @@ class ContainerPipes : public Container {
                std::string args, std::set<Syscall> forbidden_syscalls) override;
     ExitStatus sync(const char cgroup_id[20]) override;
 };
-
-class ContainerDocker : public Container {
-public:
-    void start(std::string path_to_binary, launch_options options,
-                       std::string args, std::set<Syscall> forbidden_syscalls) override;
-    ExitStatus sync(const char cgroup_id[20]) override;
-};
 } // namespace ContainerLib
 #endif

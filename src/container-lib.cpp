@@ -127,7 +127,7 @@ void ContainerLib::ContainerPipes::ptrace_process(
             waitpid(slave_proc, &status, 0);
         }
     }
-    ContainerLib::ContainerPipes::ExitStatus return_status = ExitStatus::ok;
+    ContainerLib::Container::ExitStatus return_status = ExitStatus::ok;
     write(pipe_for_exit_status[1], &return_status, sizeof(exit_status));
     get_output(exec2ptrace);
     write_to_fd(ptrace2main, buf.c_str(), buf.size());
@@ -155,7 +155,7 @@ void ContainerLib::ContainerPipes::start(std::string path_to_binary,
     }
 }
 
-ContainerLib::ContainerPipes::ExitStatus
+ContainerLib::Container::ExitStatus
 ContainerLib::ContainerPipes::sync(const char cgroup_id[20]) {
     int ptrace_status;
     waitpid(ptrace_proc, &ptrace_status, 0);
