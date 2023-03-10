@@ -27,7 +27,7 @@ system that smells *bebra* and gives rating for it
 import container_lib_py
 
 # construct neccesary objects
-cont = container_lib_py.Container()
+cont = container_lib_py.ContainerPipes()
 opt = container_lib_py.launch_options()
 
 # max time of executing program
