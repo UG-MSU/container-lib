@@ -1,6 +1,10 @@
-#include "docker-cpp/docker.h"
+#include "docker-lib/docker-lib.hpp"
 #include <iostream>
 
 using namespace std;
 
-int main() { return 0; }
+int main() {
+  DockerLib::container cont;
+  cont.init_container();
+  return 0;   
+}

@@ -1,9 +1,14 @@
 #include "docker-lib/docker-lib.hpp"
 
-void DockerLib::Docker::init_docker() {}
+void DockerLib::container::init_container() {
+  Docker client = Docker();
+  /*JSON_DOCUMENT doc = client.list_containers(true); 
+  std::cout << jsonToString(doc) << std::endl;*/
+  std::cout << "HELLO, I`M DOCKER!" << std::endl;
+}
 
-void DockerLib::Docker::delete_docker() {}
+void DockerLib::container::delete_container() {}
 
-void DockerLib::Docker::start(std::string path_to_program, std::string args) {}
+void DockerLib::container::start(std::string path_to_program, std::string args) {}
 
-std::string DockerLib::Docker::get_output() {}
+std::string DockerLib::container::get_output() {return "";}

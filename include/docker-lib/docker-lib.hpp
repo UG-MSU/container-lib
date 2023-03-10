@@ -3,12 +3,13 @@
 
 namespace DockerLib {
 
-class Docker {
+class container {
   private:
-    void init_docker();
-    void delete_docker();
+    //void init_container();
+    void delete_container();
 
   public:
+    void init_container();
     void start(std::string path_to_program, std::string args);
     std::string get_output();
 };
