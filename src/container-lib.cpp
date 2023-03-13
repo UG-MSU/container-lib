@@ -3,7 +3,7 @@
 
 
 
-void ContainerLib::Container::ptrace_process(
+void ContainerLib::ContainerPipes::ptrace_process(
     launch_options options, std::set<Syscall> forbidden_syscalls) {
     int status, exit_status;
     waitpid(slave_proc, &status, 0);
@@ -135,9 +135,9 @@ void ContainerLib::Container::ptrace_process(
     exit(exit_status);
 }
 
-void ContainerLib::Container::start(std::string path_to_binary,
-                                    launch_options options, std::string args,
-                                    std::set<Syscall> forbidden_syscalls) {
+void ContainerLib::ContainerPipes::start(std::string path_to_binary,
+                                         launch_options options, std::string args,
+                                         std::set<Syscall> forbidden_syscalls) {
     std::random_device r;
     std::default_random_engine e(r());
     std::uniform_int_distribution<int> uniform_dist(0, 16);
@@ -156,7 +156,7 @@ void ContainerLib::Container::start(std::string path_to_binary,
 }
 
 ContainerLib::Container::ExitStatus
-ContainerLib::Container::sync(std::string cgroup_id) {
+ContainerLib::ContainerPipes::sync(std::string cgroup_id) {
     int ptrace_status;
     waitpid(ptrace_proc, &ptrace_status, 0);
     ExitStatus status;
@@ -168,9 +168,9 @@ ContainerLib::Container::sync(std::string cgroup_id) {
     }
 }
 
-void ContainerLib::Container::create_processes(
+void ContainerLib::ContainerPipes::create_processes(
     std::string path_to_binary, std::string args,
-    ContainerLib::Container::launch_options options,
+    ContainerLib::ContainerPipes::launch_options options,
     std::set<Syscall> forbidden_syscalls) {
     slave_proc = fork();
     if (slave_proc != 0) {
@@ -186,7 +186,7 @@ void ContainerLib::Container::create_processes(
     }
 }
 
-void ContainerLib::Container::pipe_init() {
+void ContainerLib::ContainerPipes::pipe_init() {
     pipe(ptrace2exec);
     pipe(ptrace2main);
     pipe(exec2ptrace);
@@ -199,7 +199,7 @@ void ContainerLib::Container::pipe_init() {
 
 std::string ContainerLib::Container::get_buf() const { return buf; }
 
-void ContainerLib::Container::get_output(const fd_t *fd) { // updates buf
+void ContainerLib::ContainerPipes::get_output(const fd_t *fd) { // updates buf
     std::stringstream input;
     char tmp;
     int nread = 0;
@@ -211,16 +211,16 @@ void ContainerLib::Container::get_output(const fd_t *fd) { // updates buf
     return;
 }
 
-void ContainerLib::Container::write_to_fd(const fd_t *fd, const char *string,
-                                          size_t size) {
+void ContainerLib::ContainerPipes::write_to_fd(const fd_t *fd, const char *string,
+                                               size_t size) {
     char *tmp = new char[size];
     strcpy(tmp, string);
     int write_status = write(fd[1], tmp, size);
     delete[] tmp;
     return;
 }
-void ContainerLib::Container::kill_in_syscall(pid_t pid,
-                                              user_regs_struct &state) {
+void ContainerLib::ContainerPipes::kill_in_syscall(pid_t pid,
+                                                   user_regs_struct &state) {
     state.orig_rax = __NR_kill;
     state.rdi = pid;
     state.rsi = SIGKILL;

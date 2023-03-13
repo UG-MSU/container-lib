@@ -26,7 +26,9 @@ namespace ContainerLib {
     }
 
 class Container {
-  public:
+protected:
+    std::string buf;
+public:
     using time_t = size_t;
     using fd_t = int;
     struct launch_options {
@@ -68,12 +70,16 @@ class Container {
         creat,
         connect
     };
+    virtual void start(std::string path_to_binary, launch_options options,
+                       std::string args, std::set<Syscall> forbidden_syscalls) = 0;
+    virtual ExitStatus sync(const char cgroup_id[20]) = 0;
+    std::string get_buf() const;
+};
 
-  private:
+class ContainerPipes : public Container {
     pid_t ptrace_proc, slave_proc;
     fd_t ptrace2exec[2], exec2ptrace[2], pipe_for_exit_status[2],
         ptrace2main[2];
-    std::string buf;
 
     void ptrace_process(launch_options options,
                         std::set<Syscall> forbidden_syscalls);
@@ -87,9 +93,8 @@ class Container {
 
   public:
     void start(std::string path_to_binary, launch_options options,
-               std::string args, std::set<Syscall> forbidden_syscalls);
-    ExitStatus sync(std::string cgroup_id);
-    std::string get_buf() const;
+               std::string args, std::set<Syscall> forbidden_syscalls) override;
+    ExitStatus sync(std::string cgroup_id) override;
 };
 } // namespace ContainerLib
 #endif
