@@ -4,7 +4,7 @@
 void echo_to_file(std::string path, std::string text) {
     int fd;
     int len = text.size();
-    SAFE("file open error", fd = open(path.c_str(), O_WRONLY));
+    SAFE(("file open error "+path).c_str(), fd = open(path.c_str(), O_WRONLY));
     if (len != write(fd, text.c_str(), len)) {
         perror("write error");
     }
@@ -27,18 +27,16 @@ int cgroup_verison() {
 void init_cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
                  std::string CGROUP_ID, int CPU) {
     int _cversion = cgroup_verison();
-    std::string cgroup = MAIN_CGROUP_PATH+CGROUP_ID;
+    std::string cgroup = MAIN_CGROUP_PATH+"/"+CGROUP_ID;
     switch (_cversion) {
     case 2: { // cgroup v2
         if (!FILE_EXISTS(MAIN_CGROUP_PATH))
             SAFE("mkdir err:", mkdir(MAIN_CGROUP_PATH.c_str(), 0777));
         if (!FILE_EXISTS(MAIN_CGROUP_PATH+"/"+CGROUP_ID)) {
             SAFE("mkdir err:", mkdir((MAIN_CGROUP_PATH+"/"+CGROUP_ID).c_str(), 0777));
-            std::cerr << "cgroup not exists\n";
         } else {
             SAFE("rmdir err:", rmdir((MAIN_CGROUP_PATH+"/"+CGROUP_ID).c_str()));
             SAFE("mkdir err:", mkdir((MAIN_CGROUP_PATH+"/"+CGROUP_ID).c_str(), 0777));
-            std::cerr << "cgroup exists\n";
         }
         echo_to_file(MAIN_CGROUP_PATH+"/cgroup.subtree_control", "+cpu +memory +cpuset"); // enable controllers
         echo_to_file(CGROUP_PATH+"/cgroup.subtree_control", "+cpu +cpuset");

@@ -33,7 +33,7 @@ void deinit_cgroup(std::string CGROUP_ID);
 
 const int64_t CGROUPV2_MAGIC = 1667723888;
 const int64_t CGROUPV1_MAGIC = 2613483;
-std::string CGROUP_PATH = "/sys/fs/cgroup";
-std::string MAIN_CGROUP_PATH = "/sys/fs/cgroup/yats";
+const std::string CGROUP_PATH = "/sys/fs/cgroup";
+const std::string MAIN_CGROUP_PATH = "/sys/fs/cgroup/yats";
 
 #endif
