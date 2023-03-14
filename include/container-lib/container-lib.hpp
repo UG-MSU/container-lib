@@ -14,7 +14,7 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <unistd.h>
-
+#include <random>
 namespace ContainerLib {
 
 #define SAFE(func, call)                                                       \
@@ -72,7 +72,7 @@ public:
     };
     virtual void start(std::string path_to_binary, launch_options options,
                        std::string args, std::set<Syscall> forbidden_syscalls) = 0;
-    virtual ExitStatus sync(const char cgroup_id[20]) = 0;
+    virtual ExitStatus sync(std::string cgroup_id) = 0;
     std::string get_buf() const;
 };
 
@@ -94,7 +94,7 @@ class ContainerPipes : public Container {
   public:
     void start(std::string path_to_binary, launch_options options,
                std::string args, std::set<Syscall> forbidden_syscalls) override;
-    ExitStatus sync(const char cgroup_id[20]) override;
+    ExitStatus sync(std::string cgroup_id) override;
 };
 } // namespace ContainerLib
 #endif

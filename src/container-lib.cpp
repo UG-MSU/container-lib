@@ -1,6 +1,7 @@
 #include "container-lib/container-lib.hpp"
 #include "container-lib/cgroups.hpp"
-#include <random>
+
+
 
 void ContainerLib::ContainerPipes::ptrace_process(
     launch_options options, std::set<Syscall> forbidden_syscalls) {
@@ -141,8 +142,7 @@ void ContainerLib::ContainerPipes::start(std::string path_to_binary,
     std::default_random_engine e(r());
     std::uniform_int_distribution<int> uniform_dist(0, 16);
     int coreCPU = uniform_dist(e);
-    init_cgroup(options.memory, options.cpu_usage, options.cgroup_id.c_str(),
-                coreCPU);
+    init_cgroup(options.memory, options.cpu_usage, options.cgroup_id, coreCPU);
     pipe_init();
     ptrace_proc = fork();
     if (ptrace_proc != 0) {
@@ -156,7 +156,7 @@ void ContainerLib::ContainerPipes::start(std::string path_to_binary,
 }
 
 ContainerLib::Container::ExitStatus
-ContainerLib::ContainerPipes::sync(const char cgroup_id[20]) {
+ContainerLib::ContainerPipes::sync(std::string cgroup_id) {
     int ptrace_status;
     waitpid(ptrace_proc, &ptrace_status, 0);
     ExitStatus status;
@@ -180,7 +180,7 @@ void ContainerLib::ContainerPipes::create_processes(
         write_to_fd(ptrace2exec, options.input.c_str(), options.input.size());
         dup2(ptrace2exec[0], STDIN_FILENO);
         dup2(exec2ptrace[1], STDOUT_FILENO);
-        add_to_cgroup(getpid(), options.cgroup_id.c_str());
+        add_to_cgroup(getpid(), options.cgroup_id);
         execl(path_to_binary.data(), args.data(), nullptr);
         perror("execl");
     }

@@ -1,4 +1,3 @@
-.vscode/**
 
 # Prerequisites
 *.d
@@ -38,7 +37,7 @@
 build/**
 src/build.sh
 
-
+.vscode/**
 
 /test
 
