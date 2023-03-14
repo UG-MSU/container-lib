@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 
 project(container-lib)
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra -pg")
 
 include_directories(include)
 # add_library(container-lib src/container-lib.cpp src/cgroups.c)
