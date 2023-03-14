@@ -129,7 +129,7 @@ void ContainerLib::ContainerPipes::ptrace_process(
         }
     }
     ContainerLib::Container::ExitStatus return_status = ExitStatus::ok;
-    write(pipe_for_exit_status[1], &return_status, sizeof(exit_status));
+    SAFE("write error in ExitStatus",write(pipe_for_exit_status[1], &return_status, sizeof(exit_status)));
     get_output(exec2ptrace);
     write_to_fd(ptrace2main, buf.c_str(), buf.size());
     exit(exit_status);
@@ -161,7 +161,7 @@ ContainerLib::ContainerPipes::sync(std::string cgroup_id) {
     waitpid(ptrace_proc, &ptrace_status, 0);
     ExitStatus status;
     if (WIFEXITED(ptrace_status)) {
-        read(pipe_for_exit_status[0], &status, sizeof(ExitStatus));
+        SAFE("read error in sync",read(pipe_for_exit_status[0], &status, sizeof(ExitStatus)));
         get_output(ptrace2main);
         deinit_cgroup(cgroup_id);
         return status;
@@ -187,10 +187,10 @@ void ContainerLib::ContainerPipes::create_processes(
 }
 
 void ContainerLib::ContainerPipes::pipe_init() {
-    pipe(ptrace2exec);
-    pipe(ptrace2main);
-    pipe(exec2ptrace);
-    pipe(pipe_for_exit_status);
+    SAFE("pipe error in ptrace2exec",pipe(ptrace2exec));
+    SAFE("pipe error in ptrace2main",pipe(ptrace2main));
+    SAFE("pipe error in exec2ptrace",pipe(exec2ptrace));
+    SAFE("pipe error in pipe exit status",pipe(pipe_for_exit_status));
     fcntl(exec2ptrace[0], F_SETFL, O_NONBLOCK);
     fcntl(ptrace2main[0], F_SETFL, O_NONBLOCK);
     fcntl(ptrace2exec[0], F_SETFL, O_NONBLOCK);
@@ -228,5 +228,5 @@ void ContainerLib::ContainerPipes::kill_in_syscall(pid_t pid,
     ptrace(PTRACE_CONT, pid, 0, 0);
     waitpid(pid, NULL, 0);
     ExitStatus return_status = ExitStatus::run_time_error;
-    write(pipe_for_exit_status[1], &return_status, sizeof(return_status));
+    SAFE("Write error in kill syscall",write(pipe_for_exit_status[1], &return_status, sizeof(return_status)));
 }

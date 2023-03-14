@@ -17,14 +17,6 @@
 #include <random>
 namespace ContainerLib {
 
-#define SAFE(func, call)                                                       \
-    {                                                                          \
-        if ((call) < 0) {                                                      \
-            perror(func);                                                      \
-            exit(1);                                                           \
-        }                                                                      \
-    }
-
 class Container {
 protected:
     std::string buf;
