@@ -174,7 +174,19 @@ void ContainerLib::ContainerPipes::create_processes(
     std::set<Syscall> forbidden_syscalls) {
     slave_proc = fork();
     if (slave_proc != 0) {
-        ptrace_process(options, forbidden_syscalls);
+        pid_t tl_proc = fork();
+        if(tl_proc == 0) {
+            int exit_status = 1;
+            std::cerr << options.time;
+            sleep(options.time);
+            user_regs_struct state {};
+            std::cerr << "sleeped\n";
+            fcntl(pipe_for_exit_status[1], F_SETFL, O_NONBLOCK); 
+            kill(slave_proc, SIGKILL);
+            ExitStatus return_status = ExitStatus::time_limit_exceeded;
+            write(pipe_for_exit_status[1], &return_status, sizeof(return_status));
+           exit(1);
+        } else ptrace_process(options, forbidden_syscalls);
     } else {
         ptrace(PTRACE_TRACEME, 0, 0, 0);
         write_to_fd(ptrace2exec, options.input.c_str(), options.input.size());

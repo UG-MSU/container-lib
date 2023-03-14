@@ -15,6 +15,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <random>
+#include <signal.h>
+
 namespace ContainerLib {
 
 #define SAFE(func, call)                                                       \
