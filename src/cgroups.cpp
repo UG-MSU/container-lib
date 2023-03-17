@@ -1,6 +1,5 @@
 #include "container-lib/cgroups.hpp"
 
-
 void echo_to_file(std::string path, std::string text) {
     int fd;
     int len = text.size();
