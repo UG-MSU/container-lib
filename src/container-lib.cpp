@@ -181,11 +181,12 @@ void ContainerLib::ContainerPipes::create_processes(
             sleep(options.time);
             user_regs_struct state {};
             std::cerr << "sleeped\n";
-            fcntl(pipe_for_exit_status[1], F_SETFL, O_NONBLOCK); 
-            kill(slave_proc, SIGKILL);
-            ExitStatus return_status = ExitStatus::time_limit_exceeded;
-            write(pipe_for_exit_status[1], &return_status, sizeof(return_status));
-           exit(1);
+          //  fcntl(pipe_for_exit_status[1], F_SETFL, O_NONBLOCK); 
+            ptrace(PTRACE_GETREGS, slave_proc, 0, &state);
+            kill_in_syscall(slave_proc, state);
+            //ExitStatus return_status = ExitStatus::time_limit_exceeded;
+           // write(pipe_for_exit_status[1], &return_status, sizeof(return_status));
+            exit(1);
         } else ptrace_process(options, forbidden_syscalls);
     } else {
         ptrace(PTRACE_TRACEME, 0, 0, 0);
