@@ -3,11 +3,12 @@
 #include <exception>
 #include <string>
 namespace ContainerLib {
+
 class Exception : public std::exception {
-    public:
-        const char * text;
-        Exception(const char * func):text(func){}
-        const char * what() const throw();
+  public:
+    const char *text;
+    Exception(const char *func) : text(func) {}
+    const char *what() const throw();
 };
-}
+} // namespace ContainerLib
 #endif
