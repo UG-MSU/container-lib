@@ -37,6 +37,7 @@ void ContainerLib::ContainerPipes::ptrace_process(
                     return;
                 } else {
                     if (fork() == 0) {
+                        ++*threads_amount;
                         slave_proc = state.rax;
                         ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
                         waitpid(slave_proc, &status, 0);
@@ -51,6 +52,7 @@ void ContainerLib::ContainerPipes::ptrace_process(
                     return;
                 } else {
                     if (fork() == 0) {
+                        ++*threads_amount;
                         slave_proc = state.rax;
                         ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
                         waitpid(slave_proc, &status, 0);
