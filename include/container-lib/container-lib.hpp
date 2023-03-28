@@ -15,6 +15,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <random>
+#include <sys/mman.h>
 namespace ContainerLib {
 
 class Container {
@@ -25,7 +26,6 @@ public:
     using fd_t = int;
     struct launch_options {
         time_t time;
-        size_t forks_amount;
         size_t forks_threshold;
         std::string input;
         uint64_t memory;
