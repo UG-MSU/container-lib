@@ -22,7 +22,7 @@ system that smells *bebra* and gives rating for it
 - github linkage
 
 ## Example of code
-```
+```python
 from container_lib_py import Container, ContainerPipes, Exception
 
 # construct neccesary objects
