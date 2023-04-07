@@ -37,7 +37,6 @@ PYBIND11_MODULE(container_lib_py, m) {
                                                py::dynamic_attr())
         .def(py::init<>())
         .def_readwrite("time", &ContainerPipes::launch_options::time)
-        .def_readwrite("forks_amount", &ContainerPipes::launch_options::forks_amount)
         .def_readwrite("forks_threshold",
                        &ContainerPipes::launch_options::forks_threshold)
         .def_readwrite("cpu_usage", &ContainerPipes::launch_options::cpu_usage)
