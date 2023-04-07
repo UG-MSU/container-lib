@@ -23,11 +23,13 @@ system that smells *bebra* and gives rating for it
 
 ## Example of code
 ```
-import container_lib_py
+from container_lib_py import Container, ContainerPipes, Exception
 
 # construct neccesary objects
-cont = container_lib_py.ContainerPipes()
-opt = container_lib_py.launch_options()
+cont = container_lib_py.ContainerPipes() # all non-python 
+contpy = container_lib_py.Container() #python
+
+opt = cont.launch_options()
 
 # max time for executing program
 opt.time = 1000
@@ -46,13 +48,20 @@ opt.cgroup_id = "QWERTY"
 # input for controlled process
 opt.input = "example of input"
 
-# start binary file with way "./test", options opt and empty arguments
-cont.start("./test", opt, "")
-# YOU MUSTN'T CALL MORE THAN 1 METHOD START FOR COTAINER OBJECT!!!
 
-# wait for end of the program and print exit status
-print(cont.sync())
 
-# print output bufer of the program
-print(cont.get_buf())
+try:
+    # start binary file with way "./test", options opt and empty arguments
+    cont.start("./test", opt, "")
+    contpy.start("./test.py", opt, "")
+    # YOU MUSTN'T CALL MORE THAN 1 METHOD START FOR COTAINER OBJECT!!!
+    # wait for end of the program and print exit status
+    print(cont.sync()) 
+    print(contpy.sync()) 
+    # print output bufer of the program
+    print(cont.get_output())  
+    print(contpy.get_buf()) 
+except Exception.compilation_error as e: #example of handling exception
+    print("not compiled")
+
 ```
