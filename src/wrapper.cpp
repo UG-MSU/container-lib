@@ -1,11 +1,15 @@
 #include "../extern/pybind11/include/pybind11/pybind11.h"
 #include "container-lib/container-lib.hpp"
+#include "container-lib/exception.hpp"
 namespace py = pybind11;
 using namespace std;
 using namespace ContainerLib;
 
 PYBIND11_MODULE(container_lib_py, m) {
     m.doc() = "containerization python lib";
+    py::class_<Exception>(m, "Exception")
+        .def(py::init([](const char *arg) { return new Exception(arg); }))
+        .def("what", &Exception::what, "Return exception error");
 
     py::class_<ContainerPipes> container(m, "ContainerPipes");
     container.def(py::init<>())
@@ -18,9 +22,11 @@ PYBIND11_MODULE(container_lib_py, m) {
 
     py::enum_<ContainerPipes::ExitStatus>(container, "ExitStatus")
         .value("ok", ContainerPipes::ExitStatus::ok)
-        .value("compilation_error", ContainerPipes::ExitStatus::compilation_error)
+        .value("compilation_error",
+               ContainerPipes::ExitStatus::compilation_error)
         .value("wrong_answer", ContainerPipes::ExitStatus::wrong_answer)
-        .value("presentation_error", ContainerPipes::ExitStatus::presentation_error)
+        .value("presentation_error",
+               ContainerPipes::ExitStatus::presentation_error)
         .value("time_limit_exceeded",
                ContainerPipes::ExitStatus::time_limit_exceeded)
         .value("memory_limit_exceeded",
