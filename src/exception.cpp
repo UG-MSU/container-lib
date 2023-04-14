@@ -3,5 +3,5 @@
 using namespace ContainerLib;
 
 const char *Exception::what() const throw() { 
-    return Exception::text; 
+    return Exception::text.c_str(); 
 }
