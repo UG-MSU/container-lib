@@ -6,8 +6,8 @@ namespace ContainerLib {
 
 class Exception : public std::exception {
   public:
-    const char *text;
-    Exception(const char *func) : text(func) {}
+    std::string text;
+    Exception(std::string func) : text(func) {}
     const char *what() const throw();
 };
 } // namespace ContainerLib
