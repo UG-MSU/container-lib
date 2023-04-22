@@ -6,20 +6,28 @@
 void ContainerLib::ContainerPipes::ptrace_process(
     launch_options options, std::set<Syscall> forbidden_syscalls) {
     int status, exit_status;
+    bool time_limit_status = false;
     waitpid(slave_proc, &status, 0);
-
+    
     ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
 
+    if(std::time_t start_tl = std::time(nullptr) == -1) {
+        //handle error
+    }
     while (!WIFEXITED(status)) {
-
+        
         user_regs_struct state{};
-
         ptrace(PTRACE_SYSCALL, slave_proc, 0, 0);
         waitpid(slave_proc, &status, 0);
 
         // at Syscall
         if (WIFSTOPPED(status) && WSTOPSIG(status) & 0x80) {
             ptrace(PTRACE_GETREGS, slave_proc, 0, &state);
+            if(std::time(nullptr) - start_tl >= options.time) {
+                kill_in_syscall(slave_proc, state);
+                std::cerr << "tl\n";
+                return;
+             }
             switch (state.orig_rax) {
             case __NR_execve:
                 if (forbidden_syscalls.count(Syscall::execve)) {
@@ -174,20 +182,24 @@ void ContainerLib::ContainerPipes::create_processes(
     std::set<Syscall> forbidden_syscalls) {
     slave_proc = fork();
     if (slave_proc != 0) {
-        pid_t tl_proc = fork();
-        if(tl_proc == 0) {
-            int exit_status = 1;
-            std::cerr << options.time;
-            sleep(options.time);
-            user_regs_struct state {};
-            std::cerr << "sleeped\n";
-          //  fcntl(pipe_for_exit_status[1], F_SETFL, O_NONBLOCK); 
-            ptrace(PTRACE_GETREGS, slave_proc, 0, &state);
-            kill_in_syscall(slave_proc, state);
-            //ExitStatus return_status = ExitStatus::time_limit_exceeded;
-           // write(pipe_for_exit_status[1], &return_status, sizeof(return_status));
-            exit(1);
-        } else ptrace_process(options, forbidden_syscalls);
+        // pid_t tl_proc = fork();
+        // if(tl_proc == 0) {
+        //     SAFE("hueta setopts", ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD));
+        //     int exit_status = 1;
+        //     std::cerr << options.time;
+        //     sleep(options.time);
+        //     user_regs_struct state {};
+        //     std::cerr << "sleeped\n";
+        //   //  fcntl(pipe_for_exit_status[1], F_SETFL, O_NONBLOCK); 
+        //     SAFE("hueta ptrace ",ptrace(PTRACE_GETREGS, slave_proc, 0, &state));
+        //     kill_in_syscall(slave_proc, state);
+        //     //ExitStatus return_status = ExitStatus::time_limit_exceeded;
+        //    // write(pipe_for_exit_status[1], &return_status, sizeof(return_status));ы
+        //     std::cerr << "\nexited func\n";
+        //     exit(1);
+        //     std::cerr << "\nexit(1)\n";
+        // } else 
+        ptrace_process(options, forbidden_syscalls);
     } else {
         ptrace(PTRACE_TRACEME, 0, 0, 0);
         write_to_fd(ptrace2exec, options.input.c_str(), options.input.size());
@@ -239,7 +251,10 @@ void ContainerLib::ContainerPipes::kill_in_syscall(pid_t pid,
     state.rsi = SIGKILL;
     ptrace(PTRACE_SETREGS, pid, 0, &state);
     ptrace(PTRACE_CONT, pid, 0, 0);
+    std::cerr << "ptraced";
     waitpid(pid, NULL, 0);
+    std::cerr << "waitpid";
     ExitStatus return_status = ExitStatus::run_time_error;
     write(pipe_for_exit_status[1], &return_status, sizeof(return_status));
+    std::cerr << "\nwrited\n";
 }
