@@ -5,7 +5,9 @@
 
 void ContainerLib::ContainerPipes::ptrace_process(
     launch_options options, std::set<Syscall> forbidden_syscalls) {
-    int status, exit_status;
+    int status;
+    auto *threads_amount = reinterpret_cast<size_t*>(mmap(nullptr, sizeof(size_t), PROT_READ | PROT_WRITE, MAP_SHARED, -1, 0));
+    *threads_amount = 1;
     bool time_limit_status = false;
     waitpid(slave_proc, &status, 0);
     
@@ -22,6 +24,10 @@ void ContainerLib::ContainerPipes::ptrace_process(
 
         // at Syscall
         if (WIFSTOPPED(status) && WSTOPSIG(status) & 0x80) {
+            if (*threads_amount >= options.forks_threshold) {
+                kill_in_syscall(slave_proc, state);
+                exit(0);
+            }
             ptrace(PTRACE_GETREGS, slave_proc, 0, &state);
             if(std::time(nullptr) - start_tl >= options.time) {
                 kill_in_syscall(slave_proc, state);
@@ -32,14 +38,15 @@ void ContainerLib::ContainerPipes::ptrace_process(
             case __NR_execve:
                 if (forbidden_syscalls.count(Syscall::execve)) {
                     kill_in_syscall(slave_proc, state);
-                    return;
+                    exit(0);
                 }
             case __NR_clone:
                 if (forbidden_syscalls.count(Syscall::clone)) {
                     kill_in_syscall(slave_proc, state);
-                    return;
+                    exit(0);
                 } else {
                     if (fork() == 0) {
+                        ++*threads_amount;
                         slave_proc = state.rax;
                         ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
                         waitpid(slave_proc, &status, 0);
@@ -51,9 +58,10 @@ void ContainerLib::ContainerPipes::ptrace_process(
             case __NR_fork:
                 if (forbidden_syscalls.count(Syscall::fork)) {
                     kill_in_syscall(slave_proc, state);
-                    return;
+                    exit(0);
                 } else {
                     if (fork() == 0) {
+                        ++*threads_amount;
                         slave_proc = state.rax;
                         ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
                         waitpid(slave_proc, &status, 0);
@@ -66,67 +74,67 @@ void ContainerLib::ContainerPipes::ptrace_process(
             case __NR_kill:
                 if (forbidden_syscalls.count(Syscall::kill)) {
                     kill_in_syscall(slave_proc, state);
-                    return;
+                    exit(0);
                 }
                 break;
             case __NR_vfork:
                 if (forbidden_syscalls.count(Syscall::vfork)) {
                     kill_in_syscall(slave_proc, state);
-                    return;
+                    exit(0);
                 }
                 break;
             case __NR_mkdir:
                 if (forbidden_syscalls.count(Syscall::mkdir)) {
                     kill_in_syscall(slave_proc, state);
-                    return;
+                    exit(0);
                 }
                 break;
             case __NR_rmdir:
                 if (forbidden_syscalls.count(Syscall::rmdir)) {
                     kill_in_syscall(slave_proc, state);
-                    return;
+                    exit(0);
                 }
                 break;
             case __NR_reboot:
                 if (forbidden_syscalls.count(Syscall::reboot)) {
                     kill_in_syscall(slave_proc, state);
-                    return;
+                    exit(0);
                 }
                 break;
             case __NR_open:
                 if (forbidden_syscalls.count(Syscall::open)) {
                     kill_in_syscall(slave_proc, state);
-                    return;
+                    exit(0);
                 }
                 break;
             case __NR_openat:
                 if (forbidden_syscalls.count(Syscall::openat)) {
                     kill_in_syscall(slave_proc, state);
-                    return;
+                    exit(0);
                 }
                 break;
             case __NR_sethostname:
                 if (forbidden_syscalls.count(Syscall::sethostname)) {
                     kill_in_syscall(slave_proc, state);
-                    return;
+                    exit(0);
                 }
                 break;
             case __NR_setdomainname:
                 if (forbidden_syscalls.count(Syscall::setdomainname)) {
                     kill_in_syscall(slave_proc, state);
-                    return;
+                    exit(0);
                 }
                 break;
             case __NR_creat:
                 if (forbidden_syscalls.count(Syscall::creat)) {
                     kill_in_syscall(slave_proc, state);
-                    return;
+                    exit(0);
                 }
                 break;
             case __NR_connect:
                 if (forbidden_syscalls.count(Syscall::connect)) {
                     kill_in_syscall(slave_proc, state);
-                    return;
+                    exit(0);
                 }
                 break;
             }
@@ -137,10 +145,10 @@ void ContainerLib::ContainerPipes::ptrace_process(
         }
     }
     ContainerLib::Container::ExitStatus return_status = ExitStatus::ok;
-    write(pipe_for_exit_status[1], &return_status, sizeof(exit_status));
+    SAFE("write error in ExitStatus",write(pipe_for_exit_status[1], &return_status, sizeof(return_status)));
     get_output(exec2ptrace);
     write_to_fd(ptrace2main, buf.c_str(), buf.size());
-    exit(exit_status);
+    exit(0);
 }
 
 void ContainerLib::ContainerPipes::start(std::string path_to_binary,
@@ -169,7 +177,7 @@ ContainerLib::ContainerPipes::sync(std::string cgroup_id) {
     waitpid(ptrace_proc, &ptrace_status, 0);
     ExitStatus status;
     if (WIFEXITED(ptrace_status)) {
-        read(pipe_for_exit_status[0], &status, sizeof(ExitStatus));
+        SAFE("read error in sync",read(pipe_for_exit_status[0], &status, sizeof(ExitStatus)));
         get_output(ptrace2main);
         deinit_cgroup(cgroup_id);
         return status;
@@ -212,10 +220,10 @@ void ContainerLib::ContainerPipes::create_processes(
 }
 
 void ContainerLib::ContainerPipes::pipe_init() {
-    pipe(ptrace2exec);
-    pipe(ptrace2main);
-    pipe(exec2ptrace);
-    pipe(pipe_for_exit_status);
+    SAFE("pipe error in ptrace2exec",pipe(ptrace2exec));
+    SAFE("pipe error in ptrace2main",pipe(ptrace2main));
+    SAFE("pipe error in exec2ptrace",pipe(exec2ptrace));
+    SAFE("pipe error in pipe exit status",pipe(pipe_for_exit_status));
     fcntl(exec2ptrace[0], F_SETFL, O_NONBLOCK);
     fcntl(ptrace2main[0], F_SETFL, O_NONBLOCK);
     fcntl(ptrace2exec[0], F_SETFL, O_NONBLOCK);
@@ -255,6 +263,5 @@ void ContainerLib::ContainerPipes::kill_in_syscall(pid_t pid,
     waitpid(pid, NULL, 0);
     std::cerr << "waitpid";
     ExitStatus return_status = ExitStatus::run_time_error;
-    write(pipe_for_exit_status[1], &return_status, sizeof(return_status));
-    std::cerr << "\nwrited\n";
+    SAFE("Write error in kill syscall",write(pipe_for_exit_status[1], &return_status, sizeof(return_status)));
 }

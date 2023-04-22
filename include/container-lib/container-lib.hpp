@@ -19,15 +19,8 @@
 #include <ctime>
 
 
+#include <sys/mman.h>
 namespace ContainerLib {
-
-#define SAFE(func, call)                                                       \
-    {                                                                          \
-        if ((call) < 0) {                                                      \
-            perror(func);                                                      \
-            exit(1);                                                           \
-        }                                                                      \
-    }
 
 class Container {
 protected:
@@ -37,7 +30,6 @@ public:
     using fd_t = int;
     struct launch_options {
         time_t time;
-        size_t forks_amount;
         size_t forks_threshold;
         std::string input;
         uint64_t memory;

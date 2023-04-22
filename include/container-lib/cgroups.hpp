@@ -1,5 +1,6 @@
 #ifndef CGROUPS_H
 #define CGROUPS_H
+#include <container-lib/exception.hpp>
 #include <errno.h>
 #include <fcntl.h>
 #include <fstream>
@@ -26,8 +27,7 @@ void deinit_cgroup(std::string CGROUP_ID);
 #define FILE_EXISTS(file) access((file).c_str(), F_OK) == 0
 #define SAFE(func, call)                                                       \
     if ((call) < 0) {                                                          \
-        perror(func);                                                          \
-        exit(1);                                                               \
+        throw ContainerLib::Exception(func);                                   \
     }
 #define intstr(s) std::to_string(s)
 
