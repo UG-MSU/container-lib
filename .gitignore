@@ -1,0 +1,8 @@
+*.vscode
+exec_dir
+linking_CMakeLists.txt
+linking_server-test.cpp
+CMakeCache.txt
+*.cmake
+CMakeFiles
+Makefile
