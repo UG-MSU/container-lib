@@ -5,6 +5,7 @@
 
 void ContainerLib::ContainerPipes::ptrace_process(
     launch_options options, std::set<Syscall> forbidden_syscalls) {
+    std::time_t start_tl;
     int status;
     auto *threads_amount = reinterpret_cast<size_t*>(mmap(nullptr, sizeof(size_t), PROT_READ | PROT_WRITE, MAP_SHARED, -1, 0));
     *threads_amount = 1;
@@ -13,11 +14,10 @@ void ContainerLib::ContainerPipes::ptrace_process(
     
     ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
 
-    if(std::time_t start_tl = std::time(nullptr) == -1) {
-        //handle error
-    }
+    // start_tl = std::time(nullptr);
+    // SAFE("ctime error", start_tl);
+    // std::cout<<"gettime\n";
     while (!WIFEXITED(status)) {
-        
         user_regs_struct state{};
         ptrace(PTRACE_SYSCALL, slave_proc, 0, 0);
         waitpid(slave_proc, &status, 0);
@@ -29,11 +29,15 @@ void ContainerLib::ContainerPipes::ptrace_process(
                 exit(0);
             }
             ptrace(PTRACE_GETREGS, slave_proc, 0, &state);
-            if(std::time(nullptr) - start_tl >= options.time) {
-                kill_in_syscall(slave_proc, state);
-                std::cerr << "tl\n";
-                return;
-             }
+            // if(std::time(nullptr) - start_tl >= options.time) {
+            //     std::cerr << "bebra\n";
+            //     kill_in_syscall(slave_proc, state);
+            //     std::cerr << "tl\n";
+            //     ContainerLib::Container::ExitStatus return_status = ExitStatus::time_limit_exceeded;
+            //     std::cerr << "bebra\n";
+            //     SAFE("write error in ExitStatus",write(pipe_for_exit_status[1], &return_status, sizeof(return_status)));
+            //     exit(1);
+            //  }
             switch (state.orig_rax) {
             case __NR_execve:
                 if (forbidden_syscalls.count(Syscall::execve)) {
