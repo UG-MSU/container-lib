@@ -3,9 +3,12 @@
 #include <asm/unistd.h>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <fcntl.h>
 #include <iostream>
+#include <random>
 #include <set>
+#include <signal.h>
 #include <sstream>
 #include <stdlib.h>
 #include <string>
@@ -14,14 +17,15 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <random>
+
 #include <sys/mman.h>
 namespace ContainerLib {
 
 class Container {
-protected:
+  protected:
     std::string buf;
-public:
+
+  public:
     using time_t = size_t;
     using fd_t = int;
     struct launch_options {
@@ -34,16 +38,16 @@ public:
     };
 
     enum class ExitStatus {
-        ok,
-        compilation_error,
-        wrong_answer,
-        presentation_error,
-        time_limit_exceeded,
-        memory_limit_exceeded,
-        output_limit_exceeded,
-        run_time_error,
-        precompile_check_failed,
-        idleness_limit_exceeded
+        ok,                      // 0
+        compilation_error,       // 1
+        wrong_answer,            // 2
+        presentation_error,      // 3
+        time_limit_exceeded,     // 4
+        memory_limit_exceeded,   // 5
+        output_limit_exceeded,   // 6
+        run_time_error,          // 7
+        precompile_check_failed, // 8
+        idleness_limit_exceeded  // 9
     };
 
     enum class Syscall {
@@ -63,7 +67,8 @@ public:
         connect
     };
     virtual void start(std::string path_to_binary, launch_options options,
-                       std::string args, std::set<Syscall> forbidden_syscalls) = 0;
+                       std::string args,
+                       std::set<Syscall> forbidden_syscalls) = 0;
     virtual ExitStatus sync(std::string cgroup_id) = 0;
     std::string get_buf() const;
 };
@@ -81,7 +86,7 @@ class ContainerPipes : public Container {
     void pipe_init();
     void get_output(const fd_t *fd);
     void write_to_fd(const fd_t *fd, const char *string, size_t size);
-    void kill_in_syscall(pid_t pid, user_regs_struct &state);
+    void kill_in_syscall(pid_t pid, user_regs_struct &state, ExitStatus status);
 
   public:
     void start(std::string path_to_binary, launch_options options,
