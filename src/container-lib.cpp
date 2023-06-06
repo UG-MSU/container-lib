@@ -7,8 +7,7 @@ void ContainerLib::ContainerPipes::ptrace_process(
     fd_t shm_fd = shm_open("threadscnt", O_CREAT | O_RDWR, 0666);
     ftruncate(shm_fd, sizeof(size_t));
     void *shm = mmap(0, sizeof(size_t), PROT_WRITE, MAP_SHARED, shm_fd, 0);
-    size_t *threads_amount =
-        (size_t *)shm; // no sigsegv :3  sigsegv dlya daunov
+    size_t *threads_amount = (size_t *)shm;
     *threads_amount = 1;
     bool time_limit_status = false;
     waitpid(slave_proc, &status, 0);
@@ -212,22 +211,6 @@ void ContainerLib::ContainerPipes::create_processes(
     std::set<Syscall> forbidden_syscalls) {
     slave_proc = fork();
     if (slave_proc != 0) {
-        // pid_t tl_proc = fork();
-        // if(tl_proc == 0) {
-        //     SAFE("hueta setopts", ptrace(PTRACE_SETOPTIONS, slave_proc, 0,
-        //     PTRACE_O_TRACESYSGOOD)); int exit_status = 1; std::cerr <<
-        //     options.time; sleep(options.time); user_regs_struct state {};
-        //     std::cerr << "sleeped\n";
-        //   //  fcntl(pipe_for_exit_status[1], F_SETFL, O_NONBLOCK);
-        //     SAFE("hueta ptrace ",ptrace(PTRACE_GETREGS, slave_proc, 0,
-        //     &state)); kill_in_syscall(slave_proc, state);
-        //     //ExitStatus return_status = ExitStatus::time_limit_exceeded;
-        //    // write(pipe_for_exit_status[1], &return_status,
-        //    sizeof(return_status));ы
-        //     std::cerr << "\nexited func\n";
-        //     exit(1);
-        //     std::cerr << "\nexit(1)\n";
-        // } else
         ptrace_process(options, forbidden_syscalls);
     } else {
         ptrace(PTRACE_TRACEME, 0, 0, 0);

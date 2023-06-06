@@ -6,14 +6,14 @@ void echo_to_file(std::string path, std::string text) {
     SAFE(("file open error " + path).c_str(),
          fd = open(path.c_str(), O_WRONLY));
     if (len != write(fd, text.c_str(), len)) {
-        perror("write error ");
+        perror("write error: ");
     }
-    SAFE("file close error", close(fd));
+    SAFE("file close error: ", close(fd));
 }
 
 int cgroup_verison() {
     struct statfs _buf;
-    SAFE("statfs error", statfs(CGROUP_PATH.c_str(), &_buf));
+    SAFE("statfs error: ", statfs(CGROUP_PATH.c_str(), &_buf));
     int64_t fs_type = _buf.f_type;
     if (fs_type == CGROUPV2_MAGIC) // cgroupv2 fs magic number
         return 2;
@@ -30,12 +30,13 @@ void init_cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
     switch (_cversion) {
     case 2: { // cgroup v2
         if (!FILE_EXISTS(MAIN_CGROUP_PATH))
-            SAFE("mkdir err: " + MAIN_CGROUP_PATH, mkdir(MAIN_CGROUP_PATH.c_str(), 0777));
+            SAFE("mkdir err: " + MAIN_CGROUP_PATH,
+                 mkdir(MAIN_CGROUP_PATH.c_str(), 0777));
         if (!FILE_EXISTS(MAIN_CGROUP_PATH + "/" + CGROUP_ID)) {
             SAFE("mkdir err: " + MAIN_CGROUP_PATH + "/" + CGROUP_ID,
                  mkdir((MAIN_CGROUP_PATH + "/" + CGROUP_ID).c_str(), 0777));
         } else {
-            SAFE("rmdir err:",
+            SAFE("rmdir err: ",
                  rmdir((MAIN_CGROUP_PATH + "/" + CGROUP_ID).c_str()));
             SAFE("mkdir err: " + MAIN_CGROUP_PATH + "/" + CGROUP_ID,
                  mkdir((MAIN_CGROUP_PATH + "/" + CGROUP_ID).c_str(), 0777));
