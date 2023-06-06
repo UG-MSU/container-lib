@@ -11,7 +11,7 @@ void echo_to_file(std::string path, std::string text) {
     SAFE("file close error: ", close(fd));
 }
 
-int cgroup_verison() {
+int ContainerLib::Cgroup::cgroup_verison() {
     struct statfs _buf;
     SAFE("statfs error: ", statfs(CGROUP_PATH.c_str(), &_buf));
     int64_t fs_type = _buf.f_type;
@@ -23,7 +23,7 @@ int cgroup_verison() {
         mount("cgroup2", CGROUP_PATH.c_str(), "cgroup2", 0, NULL);
     return 2; // not a cgroup fs
 }
-void init_cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
+void ContainerLib::Cgroup::init(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
                  std::string CGROUP_ID, int CPU) {
     int _cversion = cgroup_verison();
     std::string cgroup = MAIN_CGROUP_PATH + "/" + CGROUP_ID;
@@ -75,7 +75,7 @@ void init_cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
         exit(1);
     }
 }
-void add_to_cgroup(pid_t pid, std::string CGROUP_ID) {
+void ContainerLib::Cgroup::add_process(pid_t pid) {
     int _cversion = cgroup_verison();
     switch (_cversion) {
     case 2: {
@@ -100,6 +100,6 @@ void add_to_cgroup(pid_t pid, std::string CGROUP_ID) {
     }
 }
 
-void deinit_cgroup(std::string CGROUP_ID) {
+void ContainerLib::Cgroup::deinit() {
     SAFE("deinit err", rmdir((MAIN_CGROUP_PATH + "/" + CGROUP_ID).c_str()));
 }
