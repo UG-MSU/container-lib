@@ -37,7 +37,7 @@ void init_cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
         } else {
             SAFE("rmdir err:",
                  rmdir((MAIN_CGROUP_PATH + "/" + CGROUP_ID).c_str()));
-            SAFE("mkdir err:" + MAIN_CGROUP_PATH + "/" + CGROUP_ID,
+            SAFE("mkdir err: " + MAIN_CGROUP_PATH + "/" + CGROUP_ID,
                  mkdir((MAIN_CGROUP_PATH + "/" + CGROUP_ID).c_str(), 0777));
         }
         echo_to_file(MAIN_CGROUP_PATH + "/cgroup.subtree_control",
