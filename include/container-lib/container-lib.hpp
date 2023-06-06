@@ -3,6 +3,7 @@
 #include <asm/unistd.h>
 #include <cstdlib>
 #include <cstring>
+#include <csignal>
 #include <fcntl.h>
 #include <iostream>
 #include <set>
