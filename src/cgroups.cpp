@@ -30,7 +30,7 @@ void init_cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
     switch (_cversion) {
     case 2: { // cgroup v2
         if (!FILE_EXISTS(MAIN_CGROUP_PATH))
-            SAFE("mkdir err:" + MAIN_CGROUP_PATH, mkdir(MAIN_CGROUP_PATH.c_str(), 0777));
+            SAFE("mkdir err: " + MAIN_CGROUP_PATH, mkdir(MAIN_CGROUP_PATH.c_str(), 0777));
         if (!FILE_EXISTS(MAIN_CGROUP_PATH + "/" + CGROUP_ID)) {
             SAFE("mkdir err: " + MAIN_CGROUP_PATH + "/" + CGROUP_ID,
                  mkdir((MAIN_CGROUP_PATH + "/" + CGROUP_ID).c_str(), 0777));
