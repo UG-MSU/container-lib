@@ -6,52 +6,50 @@ void ContainerLib::ContainerPipes::ptrace_process(
     int status;
     fd_t shm_fd = shm_open("threadscnt", O_CREAT | O_RDWR, 0666);
     ftruncate(shm_fd, sizeof(size_t));
-    void *threads_amount =
-        mmap(0, sizeof(size_t), PROT_WRITE, MAP_SHARED, shm_fd, 0);
-    *(size_t *)threads_amount = 1; // no sigsegv :3  sigsegv dlya daunov
+    void *shm = mmap(0, sizeof(size_t), PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    size_t *threads_amount =
+        (size_t *)shm; // no sigsegv :3  sigsegv dlya daunov
+    *threads_amount = 1;
     bool time_limit_status = false;
     waitpid(slave_proc, &status, 0);
-    
+
     ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
 
-    // start_tl = std::time(nullptr);
-    // SAFE("ctime error", start_tl);
-    // std::cout<<"gettime\n";
+    start_tl = std::time(nullptr);
+    SAFE("ctime error", start_tl);
     while (!WIFEXITED(status)) {
         user_regs_struct state{};
         ptrace(PTRACE_SYSCALL, slave_proc, 0, 0);
         waitpid(slave_proc, &status, 0);
         // at Syscall
         if (WIFSTOPPED(status) && WSTOPSIG(status) & 0x80) {
-            if (*(size_t *)threads_amount >=
-                options.forks_threshold) { // here too
-                kill_in_syscall(slave_proc, state);
+            if (*threads_amount >= options.forks_threshold) {
+                kill_in_syscall(slave_proc, state, ExitStatus::run_time_error);
                 exit(0);
             }
             ptrace(PTRACE_GETREGS, slave_proc, 0, &state);
-            // if(std::time(nullptr) - start_tl >= options.time) {
-            //     std::cerr << "bebra\n";
-            //     kill_in_syscall(slave_proc, state);
-            //     std::cerr << "tl\n";
-            //     ContainerLib::Container::ExitStatus return_status = ExitStatus::time_limit_exceeded;
-            //     std::cerr << "bebra\n";
-            //     SAFE("write error in ExitStatus",write(pipe_for_exit_status[1], &return_status, sizeof(return_status)));
-            //     exit(1);
-            //  }
+            if (std::time(nullptr) - start_tl >= options.time) {
+                kill_in_syscall(slave_proc, state,
+                                ExitStatus::time_limit_exceeded);
+                std::cerr << "timelimit exceeded\n";
+                exit(0);
+            }
             switch (state.orig_rax) {
             case __NR_execve:
                 if (forbidden_syscalls.count(Syscall::execve)) {
 
-                    kill_in_syscall(slave_proc, state);
+                    kill_in_syscall(slave_proc, state,
+                                    ExitStatus::run_time_error);
                     exit(0);
                 }
             case __NR_clone:
                 if (forbidden_syscalls.count(Syscall::clone)) {
-                    kill_in_syscall(slave_proc, state);
+                    kill_in_syscall(slave_proc, state,
+                                    ExitStatus::run_time_error);
                     exit(0);
                 } else {
                     if (fork() == 0) {
-                        ++*(size_t *)threads_amount;
+                        ++*threads_amount;
                         slave_proc = state.rax;
                         ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
                         waitpid(slave_proc, &status, 0);
@@ -62,11 +60,12 @@ void ContainerLib::ContainerPipes::ptrace_process(
                 break;
             case __NR_fork:
                 if (forbidden_syscalls.count(Syscall::fork)) {
-                    kill_in_syscall(slave_proc, state);
+                    kill_in_syscall(slave_proc, state,
+                                    ExitStatus::run_time_error);
                     exit(0);
                 } else {
                     if (fork() == 0) {
-                        ++*(size_t *)threads_amount;
+                        ++*threads_amount;
                         slave_proc = state.rax;
                         ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
                         waitpid(slave_proc, &status, 0);
@@ -78,67 +77,78 @@ void ContainerLib::ContainerPipes::ptrace_process(
 
             case __NR_kill:
                 if (forbidden_syscalls.count(Syscall::kill)) {
-                    kill_in_syscall(slave_proc, state);
+                    kill_in_syscall(slave_proc, state,
+                                    ExitStatus::run_time_error);
                     exit(0);
                 }
                 break;
             case __NR_vfork:
                 if (forbidden_syscalls.count(Syscall::vfork)) {
-                    kill_in_syscall(slave_proc, state);
+                    kill_in_syscall(slave_proc, state,
+                                    ExitStatus::run_time_error);
                     exit(0);
                 }
                 break;
             case __NR_mkdir:
                 if (forbidden_syscalls.count(Syscall::mkdir)) {
-                    kill_in_syscall(slave_proc, state);
+                    kill_in_syscall(slave_proc, state,
+                                    ExitStatus::run_time_error);
                     exit(0);
                 }
                 break;
             case __NR_rmdir:
                 if (forbidden_syscalls.count(Syscall::rmdir)) {
-                    kill_in_syscall(slave_proc, state);
+                    kill_in_syscall(slave_proc, state,
+                                    ExitStatus::run_time_error);
                     exit(0);
                 }
                 break;
             case __NR_reboot:
                 if (forbidden_syscalls.count(Syscall::reboot)) {
-                    kill_in_syscall(slave_proc, state);
+                    kill_in_syscall(slave_proc, state,
+                                    ExitStatus::run_time_error);
                     exit(0);
                 }
                 break;
             case __NR_open:
                 if (forbidden_syscalls.count(Syscall::open)) {
-                    kill_in_syscall(slave_proc, state);
+                    kill_in_syscall(slave_proc, state,
+                                    ExitStatus::run_time_error);
                     exit(0);
                 }
                 break;
             case __NR_openat:
                 if (forbidden_syscalls.count(Syscall::openat)) {
-                    kill_in_syscall(slave_proc, state);
+                    kill_in_syscall(slave_proc, state,
+                                    ExitStatus::run_time_error);
                     exit(0);
                 }
                 break;
             case __NR_sethostname:
                 if (forbidden_syscalls.count(Syscall::sethostname)) {
-                    kill_in_syscall(slave_proc, state);
+                    kill_in_syscall(slave_proc, state,
+                                    ExitStatus::run_time_error);
                     exit(0);
                 }
                 break;
             case __NR_setdomainname:
                 if (forbidden_syscalls.count(Syscall::setdomainname)) {
-                    kill_in_syscall(slave_proc, state);
+                    kill_in_syscall(slave_proc, state,
+                                    ExitStatus::run_time_error);
                     exit(0);
                 }
                 break;
             case __NR_creat:
                 if (forbidden_syscalls.count(Syscall::creat)) {
-                    kill_in_syscall(slave_proc, state);
+                    kill_in_syscall(slave_proc, state,
+                                    ExitStatus::run_time_error);
                     exit(0);
                 }
                 break;
             case __NR_connect:
                 if (forbidden_syscalls.count(Syscall::connect)) {
-                    kill_in_syscall(slave_proc, state);
+                    kill_in_syscall(slave_proc, state,
+                                    ExitStatus::run_time_error);
                     exit(0);
                 }
                 break;
@@ -204,21 +214,20 @@ void ContainerLib::ContainerPipes::create_processes(
     if (slave_proc != 0) {
         // pid_t tl_proc = fork();
         // if(tl_proc == 0) {
-        //     SAFE("hueta setopts", ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD));
-        //     int exit_status = 1;
-        //     std::cerr << options.time;
-        //     sleep(options.time);
-        //     user_regs_struct state {};
+        //     SAFE("hueta setopts", ptrace(PTRACE_SETOPTIONS, slave_proc, 0,
+        //     PTRACE_O_TRACESYSGOOD)); int exit_status = 1; std::cerr <<
+        //     options.time; sleep(options.time); user_regs_struct state {};
         //     std::cerr << "sleeped\n";
-        //   //  fcntl(pipe_for_exit_status[1], F_SETFL, O_NONBLOCK); 
-        //     SAFE("hueta ptrace ",ptrace(PTRACE_GETREGS, slave_proc, 0, &state));
-        //     kill_in_syscall(slave_proc, state);
+        //   //  fcntl(pipe_for_exit_status[1], F_SETFL, O_NONBLOCK);
+        //     SAFE("hueta ptrace ",ptrace(PTRACE_GETREGS, slave_proc, 0,
+        //     &state)); kill_in_syscall(slave_proc, state);
         //     //ExitStatus return_status = ExitStatus::time_limit_exceeded;
-        //    // write(pipe_for_exit_status[1], &return_status, sizeof(return_status));ы
+        //    // write(pipe_for_exit_status[1], &return_status,
+        //    sizeof(return_status));ы
         //     std::cerr << "\nexited func\n";
         //     exit(1);
         //     std::cerr << "\nexit(1)\n";
-        // } else 
+        // } else
         ptrace_process(options, forbidden_syscalls);
     } else {
         ptrace(PTRACE_TRACEME, 0, 0, 0);
@@ -266,17 +275,15 @@ void ContainerLib::ContainerPipes::write_to_fd(const fd_t *fd,
     return;
 }
 void ContainerLib::ContainerPipes::kill_in_syscall(pid_t pid,
-                                                   user_regs_struct &state) {
+                                                   user_regs_struct &state,
+                                                   ExitStatus status) {
     state.orig_rax = __NR_kill;
     state.rdi = pid;
     state.rsi = SIGKILL;
     shm_unlink("threadscnt");
     ptrace(PTRACE_SETREGS, pid, 0, &state);
     ptrace(PTRACE_CONT, pid, 0, 0);
-    std::cerr << "ptraced";
     waitpid(pid, NULL, 0);
-    std::cerr << "waitpid";
-    ExitStatus return_status = ExitStatus::run_time_error;
     SAFE("Write error in kill syscall",
-         write(pipe_for_exit_status[1], &return_status, sizeof(return_status)));
+         write(pipe_for_exit_status[1], &status, sizeof(status)));
 }
