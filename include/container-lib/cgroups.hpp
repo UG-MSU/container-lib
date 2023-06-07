@@ -1,6 +1,6 @@
 #ifndef CGROUPS_H
 #define CGROUPS_H
-#include <container-lib/exception.hpp>
+#include "container-lib/exception.hpp"
 #include <errno.h>
 #include <fcntl.h>
 #include <fstream>
@@ -18,7 +18,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define FILE_EXISTS(file) access((file).c_str(), F_OK) == 0
+#define FILE_EXISTS(file) (access((file).c_str(), F_OK) == 0)
 #define SAFE(func, call)                                                       \
     if ((call) < 0) {                                                          \
         throw ContainerLib::Exception(func);                                   \
@@ -33,6 +33,7 @@ class Cgroup {
     const int64_t CGROUPV1_MAGIC = 2613483;
     const std::string CGROUP_PATH = "/sys/fs/cgroup";
     const std::string MAIN_CGROUP_PATH = "/sys/fs/cgroup/yats";
+
   public:
     std::string CGROUP_ID;
     Cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
@@ -40,11 +41,9 @@ class Cgroup {
         init(MEM_SIZE, TOTAL_CPU_PERCENTAGE, _CGROUP_ID, CPU);
         CGROUP_ID = _CGROUP_ID;
     }
-    ~Cgroup() {
-        deinit();
-    }
+    ~Cgroup() { deinit(); }
     void init(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
-                     std::string _CGROUP_ID, int CPU);
+              std::string _CGROUP_ID, int CPU);
     void add_process(pid_t pid);
     void deinit();
 };
