@@ -172,7 +172,7 @@ void ContainerLib::ContainerPipes::start(std::string path_to_binary,
     std::default_random_engine e(r());
     std::uniform_int_distribution<int> uniform_dist(0, sysconf(_SC_NPROCESSORS_ONLN));
     int coreCPU = uniform_dist(e);
-    cgroup = new ContainerLib::Cgroup(options.memory, options.cpu_usage, options.cgroup_id, coreCPU);
+    cgroup.init(options.memory, options.cpu_usage, options.cgroup_id, coreCPU);
     pipe_init();
     ptrace_proc = fork();
 
@@ -196,7 +196,7 @@ ContainerLib::ContainerPipes::sync(std::string cgroup_id) {
         SAFE("read error in sync",
              read(pipe_for_exit_status[0], &status, sizeof(ExitStatus)));
         get_output(ptrace2main);
-        cgroup->deinit();
+        cgroup.deinit();
         return status;
     }
 }
@@ -213,7 +213,7 @@ void ContainerLib::ContainerPipes::create_processes(
         write_to_fd(ptrace2exec, options.input.c_str(), options.input.size());
         dup2(ptrace2exec[0], STDIN_FILENO);
         dup2(exec2ptrace[1], STDOUT_FILENO);
-        cgroup->add_process(getpid());
+        cgroup.add_process(getpid());
         execl(path_to_binary.data(), args.data(), nullptr);
         perror("execl");
     }

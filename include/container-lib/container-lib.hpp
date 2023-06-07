@@ -78,7 +78,7 @@ class ContainerPipes : public Container {
     pid_t ptrace_proc, slave_proc;
     fd_t ptrace2exec[2], exec2ptrace[2], pipe_for_exit_status[2],
         ptrace2main[2];
-    Cgroup *cgroup;
+    Cgroup cgroup;
     void ptrace_process(launch_options options,
                         std::set<Syscall> forbidden_syscalls);
     void create_processes(std::string path_to_binary, std::string args,

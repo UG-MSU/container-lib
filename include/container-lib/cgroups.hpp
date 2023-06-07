@@ -36,11 +36,6 @@ class Cgroup {
 
   public:
     std::string CGROUP_ID;
-    Cgroup(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
-           std::string _CGROUP_ID, int CPU) {
-        init(MEM_SIZE, TOTAL_CPU_PERCENTAGE, _CGROUP_ID, CPU);
-        CGROUP_ID = _CGROUP_ID;
-    }
     ~Cgroup() { deinit(); }
     void init(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
               std::string _CGROUP_ID, int CPU);
