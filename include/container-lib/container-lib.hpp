@@ -17,8 +17,8 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <unistd.h>
-
 #include <sys/mman.h>
+
 namespace ContainerLib {
 
 class Container {
@@ -72,12 +72,12 @@ class Container {
     virtual ExitStatus sync(std::string cgroup_id) = 0;
     std::string get_buf() const;
 };
-
+class Cgroup;
 class ContainerPipes : public Container {
     pid_t ptrace_proc, slave_proc;
     fd_t ptrace2exec[2], exec2ptrace[2], pipe_for_exit_status[2],
         ptrace2main[2];
-    Cgroup cgroup;
+    Cgroup * cgroup;
     void ptrace_process(launch_options options,
                         std::set<Syscall> forbidden_syscalls);
     void create_processes(std::string path_to_binary, std::string args,

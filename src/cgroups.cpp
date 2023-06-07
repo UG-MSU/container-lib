@@ -1,6 +1,6 @@
 #include "container-lib/cgroups.hpp"
 
-void echo_to_file(std::string path, std::string text) {
+void ContainerLib::Cgroup::echo_to_file(std::string path, std::string text) {
     int fd;
     int len = text.size();
     SAFE(("file open error " + path).c_str(),
