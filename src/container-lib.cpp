@@ -4,9 +4,8 @@ void ContainerLib::ContainerPipes::ptrace_process(
     launch_options options, std::set<Syscall> forbidden_syscalls) {
     std::time_t start_tl;
     int status;
-    ContainerLib::SharedMemory shm("threadscnt");
-    size_t *threads_amount = (size_t *)shm.memory;
-    *threads_amount = 1;
+    ContainerLib::SharedMemory<size_t> threads_amount("threadscnt");
+    *(threads_amount.memory) = 1;
     bool time_limit_status = false;
     waitpid(slave_proc, &status, 0);
 
@@ -19,7 +18,7 @@ void ContainerLib::ContainerPipes::ptrace_process(
         waitpid(slave_proc, &status, 0);
         // at Syscall
         if (WIFSTOPPED(status) && WSTOPSIG(status) & 0x80) {
-            if (*threads_amount >= options.forks_threshold) {
+            if (*(threads_amount.memory) >= options.forks_threshold) {
                 kill_in_syscall(slave_proc, state, ExitStatus::run_time_error);
                 exit(0);
             }
@@ -45,7 +44,7 @@ void ContainerLib::ContainerPipes::ptrace_process(
                     exit(0);
                 } else {
                     if (fork() == 0) {
-                        ++*threads_amount;
+                        ++*(threads_amount.memory);
                         slave_proc = state.rax;
                         ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
                         waitpid(slave_proc, &status, 0);
@@ -61,7 +60,7 @@ void ContainerLib::ContainerPipes::ptrace_process(
                     exit(0);
                 } else {
                     if (fork() == 0) {
-                        ++*threads_amount;
+                        ++*(threads_amount.memory);
                         slave_proc = state.rax;
                         ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
                         waitpid(slave_proc, &status, 0);
@@ -197,7 +196,7 @@ ContainerLib::ContainerPipes::sync(std::string cgroup_id) {
         SAFE("read error in sync",
              read(pipe_for_exit_status[0], &status, sizeof(ExitStatus)));
         get_output(ptrace2main);
-        (*cgroup).deinit();
+        cgroup->deinit();
         return status;
     }
 }
@@ -214,7 +213,7 @@ void ContainerLib::ContainerPipes::create_processes(
         write_to_fd(ptrace2exec, options.input.c_str(), options.input.size());
         dup2(ptrace2exec[0], STDIN_FILENO);
         dup2(exec2ptrace[1], STDOUT_FILENO);
-        (*cgroup).add_process(getpid());
+        cgroup->add_process(getpid());
         execl(path_to_binary.data(), args.data(), nullptr);
         perror("execl");
     }
