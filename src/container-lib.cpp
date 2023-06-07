@@ -4,16 +4,12 @@ void ContainerLib::ContainerPipes::ptrace_process(
     launch_options options, std::set<Syscall> forbidden_syscalls) {
     std::time_t start_tl;
     int status;
-    fd_t shm_fd = shm_open("threadscnt", O_CREAT | O_RDWR, 0666);
-    ftruncate(shm_fd, sizeof(size_t));
-    void *shm = mmap(0, sizeof(size_t), PROT_WRITE, MAP_SHARED, shm_fd, 0);
-    size_t *threads_amount = (size_t *)shm;
-    *threads_amount = 1;
+    ContainerLib::SharedMemory<size_t> threads_amount("threadscnt");
+    *(threads_amount.memory) = 1;
     bool time_limit_status = false;
     waitpid(slave_proc, &status, 0);
 
-    ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
-
+    ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD); 
     start_tl = std::time(nullptr);
     SAFE("ctime error", start_tl);
     while (!WIFEXITED(status)) {
@@ -22,7 +18,7 @@ void ContainerLib::ContainerPipes::ptrace_process(
         waitpid(slave_proc, &status, 0);
         // at Syscall
         if (WIFSTOPPED(status) && WSTOPSIG(status) & 0x80) {
-            if (*threads_amount >= options.forks_threshold) {
+            if (*(threads_amount.memory) >= options.forks_threshold) {
                 kill_in_syscall(slave_proc, state, ExitStatus::run_time_error);
                 exit(0);
             }
@@ -48,7 +44,7 @@ void ContainerLib::ContainerPipes::ptrace_process(
                     exit(0);
                 } else {
                     if (fork() == 0) {
-                        ++*threads_amount;
+                        ++*(threads_amount.memory);
                         slave_proc = state.rax;
                         ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
                         waitpid(slave_proc, &status, 0);
@@ -64,7 +60,7 @@ void ContainerLib::ContainerPipes::ptrace_process(
                     exit(0);
                 } else {
                     if (fork() == 0) {
-                        ++*threads_amount;
+                        ++*(threads_amount.memory);
                         slave_proc = state.rax;
                         ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
                         waitpid(slave_proc, &status, 0);
@@ -174,9 +170,9 @@ void ContainerLib::ContainerPipes::start(std::string path_to_binary,
 
     std::random_device r;
     std::default_random_engine e(r());
-    std::uniform_int_distribution<int> uniform_dist(0, 16);
+    std::uniform_int_distribution<int> uniform_dist(0, sysconf(_SC_NPROCESSORS_ONLN));
     int coreCPU = uniform_dist(e);
-    init_cgroup(options.memory, options.cpu_usage, options.cgroup_id, coreCPU);
+    cgroup.init(options.memory, options.cpu_usage, options.cgroup_id, coreCPU);
     pipe_init();
     ptrace_proc = fork();
 
@@ -200,7 +196,7 @@ ContainerLib::ContainerPipes::sync(std::string cgroup_id) {
         SAFE("read error in sync",
              read(pipe_for_exit_status[0], &status, sizeof(ExitStatus)));
         get_output(ptrace2main);
-        deinit_cgroup(cgroup_id);
+        cgroup.deinit();
         return status;
     }
 }
@@ -217,7 +213,7 @@ void ContainerLib::ContainerPipes::create_processes(
         write_to_fd(ptrace2exec, options.input.c_str(), options.input.size());
         dup2(ptrace2exec[0], STDIN_FILENO);
         dup2(exec2ptrace[1], STDOUT_FILENO);
-        add_to_cgroup(getpid(), options.cgroup_id);
+        cgroup.add_process(getpid());
         execl(path_to_binary.data(), args.data(), nullptr);
         perror("execl");
     }
@@ -263,7 +259,6 @@ void ContainerLib::ContainerPipes::kill_in_syscall(pid_t pid,
     state.orig_rax = __NR_kill;
     state.rdi = pid;
     state.rsi = SIGKILL;
-    shm_unlink("threadscnt");
     ptrace(PTRACE_SETREGS, pid, 0, &state);
     ptrace(PTRACE_CONT, pid, 0, 0);
     waitpid(pid, NULL, 0);

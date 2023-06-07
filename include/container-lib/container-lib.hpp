@@ -12,13 +12,14 @@
 #include <sstream>
 #include <stdlib.h>
 #include <string>
+#include <sys/mman.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "container-lib/cgroups.hpp"
 
-#include <sys/mman.h>
 namespace ContainerLib {
 
 class Container {
@@ -77,7 +78,7 @@ class ContainerPipes : public Container {
     pid_t ptrace_proc, slave_proc;
     fd_t ptrace2exec[2], exec2ptrace[2], pipe_for_exit_status[2],
         ptrace2main[2];
-
+    Cgroup cgroup;
     void ptrace_process(launch_options options,
                         std::set<Syscall> forbidden_syscalls);
     void create_processes(std::string path_to_binary, std::string args,
@@ -92,6 +93,24 @@ class ContainerPipes : public Container {
     void start(std::string path_to_binary, launch_options options,
                std::string args, std::set<Syscall> forbidden_syscalls) override;
     ExitStatus sync(std::string cgroup_id) override;
+};
+
+template <typename T> class SharedMemory {
+    using fd_t = int;
+
+  public:
+    fd_t shmem_fd;
+    const char *name;
+    void *_memptr;
+    T *memory;
+    SharedMemory(const char *_name) {
+        shmem_fd = shm_open(_name, O_CREAT | O_RDWR, 0666);
+        ftruncate(shmem_fd, sizeof(T));
+        _memptr = mmap(0, sizeof(T), PROT_WRITE, MAP_SHARED, shmem_fd, 0);
+        name = _name;
+        memory = (T *)_memptr;
+    }
+    ~SharedMemory() { shm_unlink(name); }
 };
 } // namespace ContainerLib
 #endif
