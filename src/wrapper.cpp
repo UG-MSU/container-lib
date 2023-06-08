@@ -7,9 +7,9 @@ using namespace ContainerLib;
 
 PYBIND11_MODULE(container_lib_py, m) {
     m.doc() = "containerization python lib";
-    py::class_<Exception>(m, "Exception")
-        .def(py::init([](const char *arg) { return new Exception(arg); }))
-        .def("what", &Exception::what, "Return exception error");
+    py::class_<ContainerException>(m, "ContainerException")
+        .def(py::init([](const char *arg) { return new ContainerException(arg); }))
+        .def("what", &ContainerException::what, "Return exception error");
 
     py::class_<ContainerPipes> container(m, "ContainerPipes");
     container.def(py::init<>())

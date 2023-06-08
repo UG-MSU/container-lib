@@ -6,6 +6,8 @@ void ContainerLib::Cgroup::echo_to_file(std::string path, std::string text) {
     SAFE(("file open error " + path).c_str(),
          fd = open(path.c_str(), O_WRONLY));
     if (len != write(fd, text.c_str(), len)) {
+        std::cerr << "triyng to write \"" << text << "\" in " << path
+                  << std::endl;
         perror("write error: ");
     }
     SAFE("file close error: ", close(fd));
@@ -24,15 +26,17 @@ int ContainerLib::Cgroup::cgroup_verison() {
     return 2; // not a cgroup fs
 }
 void ContainerLib::Cgroup::init(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
-                 std::string CGROUP_ID, int CPU) {
+                                std::string _CGROUP_ID, int CPU) {
     int _cversion = cgroup_verison();
+    CGROUP_ID = _CGROUP_ID;
     std::string cgroup = MAIN_CGROUP_PATH + "/" + CGROUP_ID;
     switch (_cversion) {
     case 2: { // cgroup v2
-        if (!FILE_EXISTS(MAIN_CGROUP_PATH))
+        if (!FILE_EXISTS(MAIN_CGROUP_PATH + "/cgroup.procs"))
             SAFE("mkdir err: " + MAIN_CGROUP_PATH,
                  mkdir(MAIN_CGROUP_PATH.c_str(), 0777));
-        if (!FILE_EXISTS(MAIN_CGROUP_PATH + "/" + CGROUP_ID)) {
+        if (!FILE_EXISTS(MAIN_CGROUP_PATH + "/" + CGROUP_ID +
+                         "/cgroup.procs")) {
             SAFE("mkdir err: " + MAIN_CGROUP_PATH + "/" + CGROUP_ID,
                  mkdir((MAIN_CGROUP_PATH + "/" + CGROUP_ID).c_str(), 0777));
         } else {
@@ -71,7 +75,7 @@ void ContainerLib::Cgroup::init(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
         break;
     }
     case 0: // no cgroup mounted (error)
-        printf("no cgroup mounted");
+        throw ContainerLib::ContainerException("cgroup mount error");
         exit(1);
     }
 }

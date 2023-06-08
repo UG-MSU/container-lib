@@ -4,10 +4,10 @@
 #include <string>
 namespace ContainerLib {
 
-class Exception : public std::exception {
+class ContainerException : public std::exception {
   public:
     std::string text;
-    Exception(std::string func) : text(func) {}
+    ContainerException(std::string func) : text(func) {}
     const char *what() const throw();
 };
 } // namespace ContainerLib

@@ -2,6 +2,6 @@
 
 using namespace ContainerLib;
 
-const char *Exception::what() const throw() { 
-    return Exception::text.c_str(); 
+const char *ContainerException::what() const throw() { 
+    return ContainerException::text.c_str(); 
 }
