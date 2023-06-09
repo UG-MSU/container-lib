@@ -6,9 +6,8 @@ void ContainerLib::Cgroup::echo_to_file(std::string path, std::string text) {
     SAFE(("file open error " + path).c_str(),
          fd = open(path.c_str(), O_WRONLY));
     if (len != write(fd, text.c_str(), len)) {
-        std::cerr << "triyng to write \"" << text << "\" in " << path
-                  << std::endl;
-        perror("write error: ");
+        throw ContainerLib::ContainerException(
+            "error while triyng to write \"" + text + "\" in " + path + "\n");
     }
     SAFE("file close error: ", close(fd));
 }
