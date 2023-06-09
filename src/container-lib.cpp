@@ -8,8 +8,7 @@ void ContainerLib::ContainerPipes::ptrace_process(
     *(threads_amount.memory) = 1;
     bool time_limit_status = false;
     waitpid(slave_proc, &status, 0);
-
-    ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
+    ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD); 
     start_tl = std::time(nullptr);
     SAFE("ctime error", start_tl);
     while (!WIFEXITED(status)) {
