@@ -21,7 +21,8 @@
 #define FILE_EXISTS(file) (access((file).c_str(), F_OK) == 0)
 #define SAFE(func, call)                                                       \
     if ((call) < 0) {                                                          \
-        throw ContainerLib::Exception(func);                                   \
+        throw ContainerLib::ContainerException(std::string(func) + ": " +      \
+                                               std::string(strerror(errno)));  \
     }
 #define intstr(s) std::to_string(s)
 namespace ContainerLib {
