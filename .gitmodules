@@ -2,6 +2,6 @@
 	path = extern/pybind11
 	url = ../../pybind/pybind11
 	branch = stable
-[submodule "DockerClient"]
-	path = DockerClient
-	url = https://github.com/enabled-robotics/DockerClient
+[submodule "extern/DockerClient"]
+	path = extern/DockerClient
+	url = ../../cqbqdd11519/DockerClient
