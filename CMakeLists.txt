@@ -13,8 +13,13 @@ add_library(container-lib src/container-lib.cpp src/cgroups.cpp src/exception.cp
 
 add_executable(test_exec main.cpp)
 add_executable(server server.cpp)
+add_custom_target(
+   DockerClient
+   COMMAND make
+   WORKING_DIRECTORY extern/DockerClient
+)
 target_link_libraries(test_exec container-lib)
 target_link_libraries(server LINK_PUBLIC controle-prog )
+add_dependencies(server DockerClient)
 add_subdirectory(extern/pybind11)
-add_subdirectory(DockerClient)
 pybind11_add_module(container_lib_py src/wrapper.cpp src/container-lib.cpp src/cgroups.cpp src/exception.cpp)
