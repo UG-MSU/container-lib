@@ -1,4 +1,5 @@
 #include "../extern/pybind11/include/pybind11/pybind11.h"
+#include "../extern/pybind11/include/pybind11/stl.h"
 #include "container-lib/container-lib.hpp"
 #include "container-lib/exception.hpp"
 namespace py = pybind11;
@@ -7,18 +8,16 @@ using namespace ContainerLib;
 
 PYBIND11_MODULE(container_lib_py, m) {
     m.doc() = "containerization python lib";
-    py::class_<ContainerException>(m, "ContainerException")
-        .def(py::init([](const char *arg) { return new ContainerException(arg); }))
-        .def("what", &ContainerException::what, "Return exception error");
-
+    py::register_exception<ContainerException>(m, "ContainerException");
     py::class_<ContainerPipes> container(m, "ContainerPipes");
     container.def(py::init<>())
-        .def("sync", &ContainerPipes::sync, "sync function")
+        .def("sync", &ContainerPipes::sync,
+             "Synchronize process with current. Returns ExitStatus")
         .def("start", &ContainerPipes::start,
              "starts containerization process. Launch options struct: int time "
              "- start time, int forks_amount - Amount of sub-processes, int "
              "forks_threshold - Maximum amount of sub-processes")
-        .def("get_buf", &ContainerPipes::get_buf, "get buf");
+        .def("get_buf", &ContainerPipes::get_buf, "Get cout of process");
 
     py::enum_<ContainerPipes::ExitStatus>(container, "ExitStatus")
         .value("ok", ContainerPipes::ExitStatus::ok)
@@ -38,6 +37,23 @@ PYBIND11_MODULE(container_lib_py, m) {
                ContainerPipes::ExitStatus::precompile_check_failed)
         .value("idleness_limit_exceeded",
                ContainerPipes::ExitStatus::idleness_limit_exceeded)
+        .value("forbidden_syscall_exceeded",
+               ContainerPipes::ExitStatus::forbidden_syscall_exceeded)
+        .export_values();
+    py::enum_<ContainerPipes::Syscall>(container, "Syscall")
+        .value("kill", ContainerPipes::Syscall::kill)
+        .value("fork", ContainerPipes::Syscall::fork)
+        .value("clone", ContainerPipes::Syscall::clone)
+        .value("vfork", ContainerPipes::Syscall::vfork)
+        .value("execve", ContainerPipes::Syscall::execve)
+        .value("rmdir", ContainerPipes::Syscall::mkdir)
+        .value("reboot", ContainerPipes::Syscall::rmdir)
+        .value("open", ContainerPipes::Syscall::reboot)
+        .value("openat", ContainerPipes::Syscall::open)
+        .value("sethostname", ContainerPipes::Syscall::sethostname)
+        .value("setdomainname", ContainerPipes::Syscall::setdomainname)
+        .value("creat", ContainerPipes::Syscall::creat)
+        .value("connect", ContainerPipes::Syscall::connect)
         .export_values();
     py::class_<ContainerPipes::launch_options>(container, "launch_options",
                                                py::dynamic_attr())

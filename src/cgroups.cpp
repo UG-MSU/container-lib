@@ -7,7 +7,8 @@ void ContainerLib::Cgroup::echo_to_file(std::string path, std::string text) {
          fd = open(path.c_str(), O_WRONLY));
     if (len != write(fd, text.c_str(), len)) {
         throw ContainerLib::ContainerException(
-            "error while triyng to write \"" + text + "\" in " + path + "\n");
+            "error while triyng to write \"" + text + "\" in " + path + "\n" +
+            strerror(errno));
     }
     SAFE("file close error: ", close(fd));
 }
@@ -22,7 +23,7 @@ int ContainerLib::Cgroup::cgroup_verison() {
         return 1;
     else
         mount("cgroup2", CGROUP_PATH.c_str(), "cgroup2", 0, NULL);
-    return 2; // not a cgroup fs
+    return 0; // not a cgroup fs
 }
 void ContainerLib::Cgroup::init(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
                                 std::string _CGROUP_ID, int CPU) {
@@ -34,6 +35,8 @@ void ContainerLib::Cgroup::init(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
         if (!FILE_EXISTS(MAIN_CGROUP_PATH + "/cgroup.procs"))
             SAFE("mkdir err: " + MAIN_CGROUP_PATH,
                  mkdir(MAIN_CGROUP_PATH.c_str(), 0777));
+        echo_to_file(MAIN_CGROUP_PATH + "/cgroup.subtree_control",
+                     "+cpu +memory +cpuset"); // enable controllers
         if (!FILE_EXISTS(MAIN_CGROUP_PATH + "/" + CGROUP_ID +
                          "/cgroup.procs")) {
             SAFE("mkdir err: " + MAIN_CGROUP_PATH + "/" + CGROUP_ID,
@@ -44,8 +47,6 @@ void ContainerLib::Cgroup::init(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
             SAFE("mkdir err: " + MAIN_CGROUP_PATH + "/" + CGROUP_ID,
                  mkdir((MAIN_CGROUP_PATH + "/" + CGROUP_ID).c_str(), 0777));
         }
-        echo_to_file(MAIN_CGROUP_PATH + "/cgroup.subtree_control",
-                     "+cpu +memory +cpuset"); // enable controllers
         echo_to_file(CGROUP_PATH + "/cgroup.subtree_control", "+cpu +cpuset");
         echo_to_file(cgroup + "/cpuset.cpus",
                      intstr(CPU)); // set random cpu core

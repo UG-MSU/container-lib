@@ -1,5 +1,6 @@
 #ifndef CONTAINER_LIB_HPP
 #define CONTAINER_LIB_HPP
+#include "container-lib/cgroups.hpp"
 #include <asm/unistd.h>
 #include <cstdlib>
 #include <cstring>
@@ -18,7 +19,7 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include "container-lib/cgroups.hpp"
+
 
 namespace ContainerLib {
 
@@ -39,38 +40,39 @@ class Container {
     };
 
     enum class ExitStatus {
-        ok,                      // 0
-        compilation_error,       // 1
-        wrong_answer,            // 2
-        presentation_error,      // 3
-        time_limit_exceeded,     // 4
-        memory_limit_exceeded,   // 5
-        output_limit_exceeded,   // 6
-        run_time_error,          // 7
-        precompile_check_failed, // 8
-        idleness_limit_exceeded  // 9
+        ok,                        // 0
+        compilation_error,         // 1
+        wrong_answer,              // 2
+        presentation_error,        // 3
+        time_limit_exceeded,       // 4
+        memory_limit_exceeded,     // 5
+        output_limit_exceeded,     // 6
+        run_time_error,            // 7
+        precompile_check_failed,   // 8
+        idleness_limit_exceeded,   // 9
+        forbidden_syscall_exceeded // 10
     };
 
     enum class Syscall {
-        kill,
-        fork,
-        clone,
-        vfork,
-        execve,
-        mkdir,
-        rmdir,
-        reboot,
-        open,
-        openat,
-        sethostname,
-        setdomainname,
-        creat,
-        connect
+        kill = __NR_kill,
+        fork = __NR_fork,
+        clone = __NR_clone,
+        vfork = __NR_vfork,
+        execve = __NR_execve,
+        mkdir = __NR_mkdir,
+        rmdir = __NR_rmdir,
+        reboot = __NR_reboot,
+        open = __NR_open,
+        openat = __NR_openat,
+        sethostname = __NR_sethostname,
+        setdomainname = __NR_setdomainname,
+        creat = __NR_creat,
+        connect = __NR_connect
     };
     virtual void start(std::string path_to_binary, launch_options options,
                        std::string args,
                        std::set<Syscall> forbidden_syscalls) = 0;
-    virtual ExitStatus sync(std::string cgroup_id) = 0;
+    virtual ExitStatus sync() = 0;
     std::string get_buf() const;
 };
 
@@ -92,7 +94,7 @@ class ContainerPipes : public Container {
   public:
     void start(std::string path_to_binary, launch_options options,
                std::string args, std::set<Syscall> forbidden_syscalls) override;
-    ExitStatus sync(std::string cgroup_id) override;
+    ExitStatus sync() override;
 };
 
 template <typename T> class SharedMemory {

@@ -8,7 +8,7 @@ void ContainerLib::ContainerPipes::ptrace_process(
     *(threads_amount.memory) = 1;
     bool time_limit_status = false;
     waitpid(slave_proc, &status, 0);
-    ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD); 
+    ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
     start_tl = std::time(nullptr);
     SAFE("ctime error", start_tl);
     while (!WIFEXITED(status)) {
@@ -28,124 +28,13 @@ void ContainerLib::ContainerPipes::ptrace_process(
                 std::cerr << "timelimit exceeded\n";
                 exit(0);
             }
-            switch (state.orig_rax) {
-            case __NR_execve:
-                if (forbidden_syscalls.count(Syscall::execve)) {
-
+            for (std::set<Syscall>::iterator itt = forbidden_syscalls.begin();
+                 itt != forbidden_syscalls.end(); ++itt) {
+                if (state.orig_rax == (int)*itt) {
                     kill_in_syscall(slave_proc, state,
-                                    ExitStatus::run_time_error);
+                                    ExitStatus::forbidden_syscall_exceeded);
                     exit(0);
                 }
-            case __NR_clone:
-                if (forbidden_syscalls.count(Syscall::clone)) {
-                    kill_in_syscall(slave_proc, state,
-                                    ExitStatus::run_time_error);
-                    exit(0);
-                } else {
-                    if (fork() == 0) {
-                        ++*(threads_amount.memory);
-                        slave_proc = state.rax;
-                        ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
-                        waitpid(slave_proc, &status, 0);
-                        ptrace(PTRACE_SETOPTIONS, slave_proc, 0,
-                               PTRACE_O_TRACESYSGOOD);
-                    }
-                }
-                break;
-            case __NR_fork:
-                if (forbidden_syscalls.count(Syscall::fork)) {
-                    kill_in_syscall(slave_proc, state,
-                                    ExitStatus::run_time_error);
-                    exit(0);
-                } else {
-                    if (fork() == 0) {
-                        ++*(threads_amount.memory);
-                        slave_proc = state.rax;
-                        ptrace(PTRACE_ATTACH, slave_proc, 0, 0);
-                        waitpid(slave_proc, &status, 0);
-                        ptrace(PTRACE_SETOPTIONS, slave_proc, 0,
-                               PTRACE_O_TRACESYSGOOD);
-                    }
-                }
-                break;
-
-            case __NR_kill:
-                if (forbidden_syscalls.count(Syscall::kill)) {
-                    kill_in_syscall(slave_proc, state,
-                                    ExitStatus::run_time_error);
-                    exit(0);
-                }
-                break;
-            case __NR_vfork:
-                if (forbidden_syscalls.count(Syscall::vfork)) {
-                    kill_in_syscall(slave_proc, state,
-                                    ExitStatus::run_time_error);
-                    exit(0);
-                }
-                break;
-            case __NR_mkdir:
-                if (forbidden_syscalls.count(Syscall::mkdir)) {
-                    kill_in_syscall(slave_proc, state,
-                                    ExitStatus::run_time_error);
-                    exit(0);
-                }
-                break;
-            case __NR_rmdir:
-                if (forbidden_syscalls.count(Syscall::rmdir)) {
-                    kill_in_syscall(slave_proc, state,
-                                    ExitStatus::run_time_error);
-                    exit(0);
-                }
-                break;
-            case __NR_reboot:
-                if (forbidden_syscalls.count(Syscall::reboot)) {
-                    kill_in_syscall(slave_proc, state,
-                                    ExitStatus::run_time_error);
-                    exit(0);
-                }
-                break;
-            case __NR_open:
-                if (forbidden_syscalls.count(Syscall::open)) {
-                    kill_in_syscall(slave_proc, state,
-                                    ExitStatus::run_time_error);
-                    exit(0);
-                }
-                break;
-            case __NR_openat:
-                if (forbidden_syscalls.count(Syscall::openat)) {
-                    kill_in_syscall(slave_proc, state,
-                                    ExitStatus::run_time_error);
-                    exit(0);
-                }
-                break;
-            case __NR_sethostname:
-                if (forbidden_syscalls.count(Syscall::sethostname)) {
-                    kill_in_syscall(slave_proc, state,
-                                    ExitStatus::run_time_error);
-                    exit(0);
-                }
-                break;
-            case __NR_setdomainname:
-                if (forbidden_syscalls.count(Syscall::setdomainname)) {
-                    kill_in_syscall(slave_proc, state,
-                                    ExitStatus::run_time_error);
-                    exit(0);
-                }
-                break;
-            case __NR_creat:
-                if (forbidden_syscalls.count(Syscall::creat)) {
-                    kill_in_syscall(slave_proc, state,
-                                    ExitStatus::run_time_error);
-                    exit(0);
-                }
-                break;
-            case __NR_connect:
-                if (forbidden_syscalls.count(Syscall::connect)) {
-                    kill_in_syscall(slave_proc, state,
-                                    ExitStatus::run_time_error);
-                    exit(0);
-                }
-                break;
             }
 
             // skip after Syscall
@@ -188,7 +77,7 @@ void ContainerLib::ContainerPipes::start(std::string path_to_binary,
 }
 
 ContainerLib::Container::ExitStatus
-ContainerLib::ContainerPipes::sync(std::string cgroup_id) {
+ContainerLib::ContainerPipes::sync() {
     int ptrace_status;
     waitpid(ptrace_proc, &ptrace_status, 0);
     ExitStatus status;
