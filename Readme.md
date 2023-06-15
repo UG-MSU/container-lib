@@ -27,8 +27,9 @@ system that smells _bebra_ and gives rating for it
 ## Quickstart
 
 ```console
-foo@bar:~$ git update --init --recursive
+foo@bar:~$ git submodule update --init --recursive
 foo@bar:~$ mkdir build
+foo@bar:~$ cd build
 foo@bar:~$ cmake ..
 foo@bar:~$ sudo make
 ```
