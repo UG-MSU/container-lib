@@ -1,5 +1,6 @@
 #ifndef CONTAINER_LIB_HPP
 #define CONTAINER_LIB_HPP
+#include "container-lib/cgroups.hpp"
 #include <asm/unistd.h>
 #include <cstdlib>
 #include <cstring>
@@ -18,11 +19,11 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include "container-lib/cgroups.hpp"
 
 namespace ContainerLib {
 
 class Container {
+
   protected:
     std::string buf;
 
@@ -67,14 +68,12 @@ class Container {
         creat,
         connect
     };
-    virtual void start(std::string path_to_binary, launch_options options,
-                       std::string args,
-                       std::set<Syscall> forbidden_syscalls) = 0;
-    virtual ExitStatus sync(std::string cgroup_id) = 0;
+    void start(std::string path_to_binary, launch_options options,
+               std::string args, std::set<Syscall> forbidden_syscalls);
+    ExitStatus sync(std::string cgroup_id);
     std::string get_buf() const;
-};
 
-class ContainerPipes : public Container {
+  private:
     pid_t ptrace_proc, slave_proc;
     fd_t ptrace2exec[2], exec2ptrace[2], pipe_for_exit_status[2],
         ptrace2main[2];
@@ -88,11 +87,6 @@ class ContainerPipes : public Container {
     void get_output(const fd_t *fd);
     void write_to_fd(const fd_t *fd, const char *string, size_t size);
     void kill_in_syscall(pid_t pid, user_regs_struct &state, ExitStatus status);
-
-  public:
-    void start(std::string path_to_binary, launch_options options,
-               std::string args, std::set<Syscall> forbidden_syscalls) override;
-    ExitStatus sync(std::string cgroup_id) override;
 };
 
 template <typename T> class SharedMemory {
