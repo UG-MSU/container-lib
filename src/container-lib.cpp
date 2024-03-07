@@ -1,6 +1,6 @@
-#include "container-lib/cgroups.hpp"
 #include "container-lib/container-lib.hpp"
-void ContainerLib::ContainerPipes::ptrace_process(
+#include "container-lib/cgroups.hpp"
+void ContainerLib::Container::ptrace_process(
     launch_options options, std::set<Syscall> forbidden_syscalls) {
     std::time_t start_tl;
     int status;
@@ -8,7 +8,7 @@ void ContainerLib::ContainerPipes::ptrace_process(
     *(threads_amount.memory) = 1;
     bool time_limit_status = false;
     waitpid(slave_proc, &status, 0);
-    ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD); 
+    ptrace(PTRACE_SETOPTIONS, slave_proc, 0, PTRACE_O_TRACESYSGOOD);
     start_tl = std::time(nullptr);
     SAFE("ctime error", start_tl);
     while (!WIFEXITED(status)) {
@@ -162,10 +162,9 @@ void ContainerLib::ContainerPipes::ptrace_process(
     exit(0);
 }
 
-void ContainerLib::ContainerPipes::start(std::string path_to_binary,
-                                         launch_options options,
-                                         std::string args,
-                                         std::set<Syscall> forbidden_syscalls) {
+void ContainerLib::Container::start(std::string path_to_binary,
+                                    launch_options options, std::string args,
+                                    std::set<Syscall> forbidden_syscalls) {
 
     std::random_device r;
     std::default_random_engine e(r());
@@ -188,7 +187,7 @@ void ContainerLib::ContainerPipes::start(std::string path_to_binary,
 }
 
 ContainerLib::Container::ExitStatus
-ContainerLib::ContainerPipes::sync(std::string cgroup_id) {
+ContainerLib::Container::sync(std::string cgroup_id) {
     int ptrace_status;
     waitpid(ptrace_proc, &ptrace_status, 0);
     ExitStatus status;
@@ -200,9 +199,9 @@ ContainerLib::ContainerPipes::sync(std::string cgroup_id) {
     }
 }
 
-void ContainerLib::ContainerPipes::create_processes(
+void ContainerLib::Container::create_processes(
     std::string path_to_binary, std::string args,
-    ContainerLib::ContainerPipes::launch_options options,
+    ContainerLib::Container ::launch_options options,
     std::set<Syscall> forbidden_syscalls) {
     slave_proc = fork();
     if (slave_proc != 0) {
@@ -218,7 +217,7 @@ void ContainerLib::ContainerPipes::create_processes(
     }
 }
 
-void ContainerLib::ContainerPipes::pipe_init() {
+void ContainerLib::Container::pipe_init() {
     SAFE("pipe error in ptrace2exec", pipe(ptrace2exec));
     SAFE("pipe error in ptrace2main", pipe(ptrace2main));
     SAFE("pipe error in exec2ptrace", pipe(exec2ptrace));
@@ -231,7 +230,7 @@ void ContainerLib::ContainerPipes::pipe_init() {
 
 std::string ContainerLib::Container::get_buf() const { return buf; }
 
-void ContainerLib::ContainerPipes::get_output(const fd_t *fd) { // updates buf
+void ContainerLib::Container::get_output(const fd_t *fd) { // updates buf
     std::stringstream input;
     char tmp;
     int nread = 0;
@@ -243,18 +242,17 @@ void ContainerLib::ContainerPipes::get_output(const fd_t *fd) { // updates buf
     return;
 }
 
-void ContainerLib::ContainerPipes::write_to_fd(const fd_t *fd,
-                                               const char *string,
-                                               size_t size) {
+void ContainerLib::Container::write_to_fd(const fd_t *fd, const char *string,
+                                          size_t size) {
     char *tmp = new char[size];
     strcpy(tmp, string);
     int write_status = write(fd[1], tmp, size);
     delete[] tmp;
     return;
 }
-void ContainerLib::ContainerPipes::kill_in_syscall(pid_t pid,
-                                                   user_regs_struct &state,
-                                                   ExitStatus status) {
+void ContainerLib::Container::kill_in_syscall(pid_t pid,
+                                              user_regs_struct &state,
+                                              ExitStatus status) {
     state.orig_rax = __NR_kill;
     state.rdi = pid;
     state.rsi = SIGKILL;
