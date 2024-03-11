@@ -33,14 +33,14 @@ class Cgroup {
     const int64_t CGROUPV2_MAGIC = 1667723888;
     const int64_t CGROUPV1_MAGIC = 2613483;
     const std::string CGROUP_PATH = "/sys/fs/cgroup";
-    const std::string MAIN_CGROUP_PATH = "/sys/fs/cgroup/yats";
+    const std::string MAIN_CGROUP_PATH = "/sys/fs/cgroup/yatss";
 
   public:
     std::string CGROUP_ID;
     ~Cgroup() { deinit(); }
     void init(uint64_t MEM_SIZE, double TOTAL_CPU_PERCENTAGE,
               std::string _CGROUP_ID, int CPU);
-    void add_process(pid_t pid);
+    void add_process(pid_t pid) ;
     void deinit();
 };
 } // namespace ContainerLib

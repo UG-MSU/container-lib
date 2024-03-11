@@ -1,7 +1,7 @@
 
 # Prerequisites
 *.d
-
+container_lib_py.egg-info/**
 # Compiled Object files
 *.slo
 *.lo
