@@ -18,11 +18,7 @@ PYBIND11_MODULE(container_lib_py, m) {
         .def_readwrite("memory", &Container::launch_options::memory)
         .def_readwrite("cgroup_id", &Container::launch_options::cgroup_id)
         .def_readwrite("input", &Container::launch_options::input);
-    py::class_<ContainerException>(m, "ContainerException")
-        .def(py::init(
-            [](const char *arg) { return new ContainerException(arg); }))
-        .def("what", &ContainerException::what, "Return exception error");
-
+    py::register_exception<ContainerException>(m, "ContainerException");
     py::class_<Container> container(m, "Container");
     container.def(py::init<>())
         .def("sync", &Container::sync, "sync function")

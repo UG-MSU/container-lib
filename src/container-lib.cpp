@@ -165,7 +165,6 @@ void ContainerLib::Container::ptrace_process(
 void ContainerLib::Container::start(std::string path_to_binary,
                                     launch_options options, std::string args,
                                     std::set<Syscall> forbidden_syscalls) {
-
     std::random_device r;
     std::default_random_engine e(r());
     std::uniform_int_distribution<int> uniform_dist(
